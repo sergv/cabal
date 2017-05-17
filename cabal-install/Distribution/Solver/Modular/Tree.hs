@@ -162,17 +162,26 @@ zeroOrOneChoices (GoalChoice _         _ ) = True
 zeroOrOneChoices (Done       _ _         ) = True
 zeroOrOneChoices (Fail       _ _         ) = True
 
+{-# INLINE cata #-}
 -- | Catamorphism on trees.
 cata :: (TreeF d c a -> a) -> Tree d c -> a
-cata phi x = (phi . fmap (cata phi) . out) x
+cata phi = go
+  where
+    go = phi . fmap go . out
 
 trav :: (TreeF d c (Tree d a) -> TreeF d a (Tree d a)) -> Tree d c -> Tree d a
 trav psi x = cata (inn . psi) x
 
+{-# INLINE para #-}
 -- | Paramorphism on trees.
 para :: (TreeF d c (a, Tree d c) -> a) -> Tree d c -> a
-para phi = phi . fmap (\ x -> (para phi x, x)) . out
+para phi = go
+  where
+    go = phi . fmap (\ x -> (go x, x)) . out
 
+{-# INLINE ana #-}
 -- | Anamorphism on trees.
 ana :: (a -> TreeF d c a) -> a -> Tree d c
-ana psi = inn . fmap (ana psi) . psi
+ana psi = go
+  where
+    go = inn . fmap go . psi

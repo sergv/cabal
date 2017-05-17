@@ -311,7 +311,7 @@ readRepoIndex verbosity repoCtxt repo idxState =
           RepoSecure{..} -> warn verbosity $ errMissingPackageList repoRemote
           RepoLocal{..}  -> warn verbosity $
                "The package list for the local repo '" ++ repoLocalDir
-            ++ "' is missing. The repo is invalid."
+            ++ "' is missing. The repo is invalid." ++ show e
         return (mempty,mempty,emptyStateInfo)
       else ioError e
 

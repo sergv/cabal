@@ -244,7 +244,11 @@ install verbosity packageDBs repos comp platform progdb useSandbox mSandboxPkgIn
       ++ "consistent dependencies. "
       ++ "Try reinstalling/unregistering the offending packages or "
       ++ "recreating the sandbox."
-    logMsg message rest = debugNoWrap verbosity message >> rest
+    logMsg :: String -> IO a -> IO a
+    logMsg message rest = do
+      const (putStrLn message) $ debugNoWrap verbosity message
+      rest
+      -- debugNoWrap verbosity message >> rest
 
 -- TODO: Make InstallContext a proper data type with documented fields.
 -- | Common context for makeInstallPlan and processInstallPlan.
@@ -320,6 +324,7 @@ makeInstallPlan verbosity
     solver <- chooseSolver verbosity (fromFlag (configSolver configExFlags))
               (compilerInfo comp)
     notice verbosity "Resolving dependencies..."
+    putStrLn $ "[DEBUG] [Distribution.Client.makeInstallPlan] solver = " ++ show solver
     return $ planPackages verbosity comp platform mSandboxPkgInfo solver
           configFlags configExFlags installFlags
           installedPkgIndex sourcePkgDb pkgConfigDb pkgSpecifiers
@@ -374,6 +379,7 @@ planPackages verbosity comp platform mSandboxPkgInfo solver
     >>= if onlyDeps then pruneInstallPlan pkgSpecifiers else return
 
   where
+    resolverParams :: DepResolverParams
     resolverParams =
 
         setMaxBackjumps (if maxBackjumps < 0 then Nothing
@@ -417,7 +423,7 @@ planPackages verbosity comp platform mSandboxPkgInfo solver
           [ let pc = PackageConstraint
                      (scopeToplevel $ pkgSpecifierTarget pkgSpecifier)
                      (PackagePropertyFlags flags)
-            in LabeledPackageConstraint pc ConstraintSourceConfigFlagOrTarget
+            in LabeledPackageConstraint pc ConstraintSourceUserTarget
           | let flags = configConfigurationsFlags configFlags
           , not (null flags)
           , pkgSpecifier <- pkgSpecifiers ]

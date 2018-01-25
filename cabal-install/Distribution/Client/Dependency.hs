@@ -42,6 +42,7 @@ module Distribution.Client.Dependency (
     reinstallTargets,
 
     -- ** Policy utils
+    DepResolverParams,
     addConstraints,
     addPreferences,
     setPreferenceDefault,

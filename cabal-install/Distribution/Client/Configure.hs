@@ -346,7 +346,7 @@ planLocalPackage verbosity comp platform configFlags configExFlags
             [ let pc = PackageConstraint
                        (scopeToplevel $ packageName pkg)
                        (PackagePropertyFlags $ configConfigurationsFlags configFlags)
-              in LabeledPackageConstraint pc ConstraintSourceConfigFlagOrTarget
+              in LabeledPackageConstraint pc ConstraintSourceUserTarget
             ]
 
         . addConstraints

@@ -1,3 +1,9 @@
+# 3.1.0.0 (current development version)
+  * Don’t rebuild world when new ghc flags that affect how error
+    messages are presented is specified.
+
+ ----
+
 # 3.0.0.0 [Mikhail Glushenkov](mailto:mikhail.glushenkov@gmail.com) August 2019
   * The 3.0 migration guide gives advice on adapting Custom setup
     scripts to backwards-incompatible changes in this release:

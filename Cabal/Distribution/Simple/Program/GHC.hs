@@ -172,11 +172,15 @@ normaliseGhcArgs (Just ghcVersion) PackageDescription{..} ghcArgs
               , "break-on-exception", "print-bind-result"
               , "print-bind-contents", "print-evld-with-show"
               , "implicit-import-qualified", "error-spans"
+              , "print-expanded-synonyms", "print-potential-instances"
+              , "print-explicit-foralls", "print-explicit-kinds"
+              , "print-explicit-coercions", "print-equality-relations"
+              , "print-typechecker-elaboration"
               ]
             , from [8,2]
                 [ "diagnostics-show-caret", "local-ghci-history"
                 , "show-warning-groups", "hide-source-paths"
-                , "show-hole-constraints"
+                , "show-hole-constraints", "print-unicode-syntax"
                 ]
             , from [8,4] ["show-loaded-modules"]
             , from [8,6] [ "ghci-leak-check", "no-it" ]

@@ -3806,16 +3806,10 @@ pruneInstallPlanPass2 pkgs =
             || installedUnitId elab `Set.member` mustBuildOnDisk
           ]
         exeTargetsRequiredForRevDeps =
-          -- TODO: allow requesting executable with different name
-          -- than package name
-          [ ComponentTarget
-            ( Cabal.CExeName $
-                packageNameToUnqualComponentName $
-                  packageName $
-                    elabPkgSourceId elab
-            )
-            WholeComponent
+          [ ComponentTarget (Cabal.CExeName exeName) WholeComponent
           | installedUnitId elab `Set.member` exeDeps
+          -- Since we're building the whole package, it's okay to build all the executables
+          , PD.Executable{exeName} <- PD.executables $ elabPkgDescription elab
           ]
 
     availablePkgs :: Set UnitId

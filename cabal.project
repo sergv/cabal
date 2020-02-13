@@ -4,6 +4,8 @@ tests: True
 
 packages: Cabal/Cabal-quickcheck/
 
+packages: https://hackage.haskell.org/package/rere-0.1/candidate/rere-0.1.tar.gz
+
 -- Uncomment to allow picking up extra local unpacked deps:
 --optional-packages: */
 

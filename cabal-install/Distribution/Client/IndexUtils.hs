@@ -314,7 +314,6 @@ readRepoIndex :: Verbosity -> RepoContext -> Repo -> IndexState
               -> IO (PackageIndex UnresolvedSourcePackage, [Dependency], IndexStateInfo)
 readRepoIndex verbosity repoCtxt repo idxState =
   handleNotFound $ do
-    when (isRepoRemote repo) $ warnIfIndexIsOld =<< getIndexFileAge repo
     updateRepoIndexCache verbosity (RepoIndex repoCtxt repo)
     readPackageIndexCacheFile verbosity mkAvailablePackage
                               (RepoIndex repoCtxt repo)
@@ -349,14 +348,6 @@ readRepoIndex verbosity repoCtxt repo idxState =
               ++ show e
         return (mempty,mempty,emptyStateInfo)
       else ioError e
-
-    isOldThreshold = 15 --days
-    warnIfIndexIsOld dt = do
-      when (dt >= isOldThreshold) $ case repo of
-        RepoRemote{..} -> warn verbosity $ errOutdatedPackageList repoRemote dt
-        RepoSecure{..} -> warn verbosity $ errOutdatedPackageList repoRemote dt
-        RepoLocal{} -> return ()
-        RepoLocalNoIndex {} -> return ()
 
     errMissingPackageList repoRemote =
          "The package list for '" ++ unRepoName (remoteRepoName repoRemote)

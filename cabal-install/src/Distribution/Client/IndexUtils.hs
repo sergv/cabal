@@ -363,7 +363,6 @@ readRepoIndex :: Verbosity -> RepoContext -> Repo -> RepoIndexState
               -> IO (PackageIndex UnresolvedSourcePackage, [Dependency], IndexStateInfo)
 readRepoIndex verbosity repoCtxt repo idxState =
   handleNotFound $ do
-    when (isRepoRemote repo) $ warnIfIndexIsOld =<< getIndexFileAge repo
     updateRepoIndexCache verbosity (RepoIndex repoCtxt repo)
     readPackageIndexCacheFile verbosity mkAvailablePackage
                               (RepoIndex repoCtxt repo)
@@ -396,20 +395,9 @@ readRepoIndex verbosity repoCtxt repo idxState =
         return (mempty,mempty,emptyStateInfo)
       else ioError e
 
-    isOldThreshold = 15 --days
-    warnIfIndexIsOld dt = do
-      when (dt >= isOldThreshold) $ case repo of
-        RepoRemote{..} -> warn verbosity $ errOutdatedPackageList repoRemote dt
-        RepoSecure{..} -> warn verbosity $ errOutdatedPackageList repoRemote dt
-        RepoLocalNoIndex {} -> return ()
-
     errMissingPackageList repoRemote =
          "The package list for '" ++ unRepoName (remoteRepoName repoRemote)
       ++ "' does not exist. Run 'cabal update' to download it."
-    errOutdatedPackageList repoRemote dt =
-         "The package list for '" ++ unRepoName (remoteRepoName repoRemote)
-      ++ "' is " ++ shows (floor dt :: Int) " days old.\nRun "
-      ++ "'cabal update' to get the latest list of available packages."
 
 -- | Return the age of the index file in days (as a Double).
 getIndexFileAge :: Repo -> IO Double

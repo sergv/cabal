@@ -436,7 +436,6 @@ readRepoIndex verbosity repoCtxt repo idxState =
         (RepoIndex repoCtxt repo)
         idxState
     when (isRepoRemote repo) $ do
-      warnIfIndexIsOld =<< getIndexFileAge repo
       dieIfRequestedIdxIsNewer isi
     pure ret
   where
@@ -470,14 +469,6 @@ readRepoIndex verbosity repoCtxt repo idxState =
           return (mempty, mempty, emptyStateInfo)
         else ioError e
 
-    isOldThreshold :: Double
-    isOldThreshold = 15 -- days
-    warnIfIndexIsOld dt = do
-      when (dt >= isOldThreshold) $ case repo of
-        RepoRemote{..} -> warn verbosity $ warnOutdatedPackageList repoRemote dt
-        RepoSecure{..} -> warn verbosity $ warnOutdatedPackageList repoRemote dt
-        RepoLocalNoIndex{} -> return ()
-
     dieIfRequestedIdxIsNewer isi =
       let latestTime = isiHeadTime isi
        in case idxState of
@@ -487,13 +478,6 @@ readRepoIndex verbosity repoCtxt repo idxState =
               RepoRemote{} -> pure ()
               RepoLocalNoIndex{} -> return ()
             IndexStateHead -> pure ()
-
-    warnOutdatedPackageList repoRemote dt =
-      "The package list for '"
-        ++ unRepoName (remoteRepoName repoRemote)
-        ++ "' is "
-        ++ shows (floor dt :: Int) " days old.\nRun "
-        ++ "'cabal update' to get the latest list of available packages."
 
 -- | Return the age of the index file in days (as a Double).
 getIndexFileAge :: Repo -> IO Double

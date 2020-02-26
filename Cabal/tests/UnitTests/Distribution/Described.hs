@@ -1,12 +1,12 @@
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# OPTIONS_GHC -fno-warn-deprecations #-}
 module UnitTests.Distribution.Described where
 
-import Data.Maybe            (fromMaybe)
-import Data.Proxy            (Proxy (..))
-import Data.String           (fromString)
-import Data.Typeable         (Typeable, typeOf)
-import Data.Void             (Void, vacuous)
+import Distribution.Compat.Prelude.Internal
+import Prelude ()
+
+import Data.Typeable         (typeOf)
 import Test.QuickCheck       (Arbitrary (..), Gen, Property, choose, counterexample)
 import Test.Tasty            (TestTree, testGroup)
 import Test.Tasty.QuickCheck (testProperty)

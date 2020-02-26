@@ -5,19 +5,15 @@
 #endif
 module UnitTests.Distribution.Utils.CharSet where
 
-import Test.Tasty       (TestTree, testGroup)
-
-#ifdef HAS_TESTS
-import Test.Tasty.HUnit (testCase, (@?=))
 import Data.Char        (isAlpha, isAlphaNum)
 import Data.List        (foldl')
+import Test.Tasty       (TestTree, testGroup)
+import Test.Tasty.HUnit (testCase, (@?=))
 
 import qualified Distribution.Utils.CharSet as CS
-#endif
 
 tests :: TestTree
 tests = testGroup "Distribution.Utils.CharSet"
-#ifdef HAS_TESTS
     [ testCase "alphanum" $
         CS.alphanum @?= foldl' (flip CS.insert) CS.empty
             [ c | c <- [ minBound .. maxBound ], isAlphaNum c ]
@@ -25,8 +21,7 @@ tests = testGroup "Distribution.Utils.CharSet"
     , testCase "alpha" $
         CS.alpha @?= foldl' (flip CS.insert) CS.empty
             [ c | c <- [ minBound .. maxBound ], isAlpha c ]
+
+    , testCase "alpha is subset of alphanum" $
+        CS.union CS.alpha CS.alphanum @?= CS.alphanum
     ]
-#else
-    [
-    ]
-#endif

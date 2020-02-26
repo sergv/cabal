@@ -666,6 +666,9 @@ test-suite unit-tests
   ghc-options: -Wall
   default-language: Haskell2010
 
+  if !impl(ghc >= 7.10)
+    build-depends: void
+
   -- Cabal-quickcheck
   hs-source-dirs: Cabal-quickcheck/src
   other-modules:
@@ -692,9 +695,6 @@ test-suite parser-tests
 
   if !impl(ghc >= 8.0)
     build-depends: semigroups
-
-  if !impl(ghc >= 7.10)
-    build-depends: void
 
   if impl(ghc >= 7.8)
     build-depends:

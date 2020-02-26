@@ -1,6 +1,9 @@
 packages: Cabal/ cabal-testsuite/ cabal-install/ solver-benchmarks/
 tests: True
 
+-- temporary
+packages: https://hackage.haskell.org/package/rere-0.1/candidate/rere-0.1.tar.gz
+
 write-ghc-environment-files: never
 
 package Cabal

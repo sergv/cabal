@@ -1,6 +1,8 @@
 packages: Cabal/ cabal-testsuite/
 tests: True
 
+packages: https://hackage.haskell.org/package/rere-0.1/candidate/rere-0.1.tar.gz
+
 write-ghc-environment-files: never
 
 package Cabal

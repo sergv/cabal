@@ -1,4 +1,5 @@
-{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Distribution.Simple.Build.PackageInfoModule.Z (render, Z (..)) where
 
@@ -14,7 +15,7 @@ data Z = Z
   }
   deriving (Generic)
 
-render :: Z -> String
+render :: Z -> Builder
 render z_root = execWriter $ do
   if (zSupportsNoRebindableSyntax z_root)
     then do
@@ -27,7 +28,7 @@ render z_root = execWriter $ do
   tell "\n"
   tell "{-|\n"
   tell "Module      : PackageInfo_"
-  tell (zPackageName z_root)
+  tellS (zPackageName z_root)
   tell "\n"
   tell "Description : Contents of some of the package's Cabal file's fields.\n"
   tell "\n"
@@ -42,7 +43,7 @@ render z_root = execWriter $ do
   tell "-}\n"
   tell "\n"
   tell "module PackageInfo_"
-  tell (zPackageName z_root)
+  tellS (zPackageName z_root)
   tell " (\n"
   tell "    name,\n"
   tell "    version,\n"
@@ -58,26 +59,26 @@ render z_root = execWriter $ do
   tell "-- hyphen characters replaced by underscore characters.\n"
   tell "name :: String\n"
   tell "name = "
-  tell (show $ zPackageName z_root)
+  tellS (show $ zPackageName z_root)
   tell "\n"
   tell "-- |The content of the @version@ field of the package's Cabal file.\n"
   tell "version :: Version\n"
   tell "version = Version "
-  tell (zVersionDigits z_root)
+  tellS (zVersionDigits z_root)
   tell " []\n"
   tell "\n"
   tell "-- |The content of the @synopsis@ field of the package's Cabal file.\n"
   tell "synopsis :: String\n"
   tell "synopsis = "
-  tell (show $ zSynopsis z_root)
+  tellS (show $ zSynopsis z_root)
   tell "\n"
   tell "-- |The content of the @copyright@ field of the package's Cabal file.\n"
   tell "copyright :: String\n"
   tell "copyright = "
-  tell (show $ zCopyright z_root)
+  tellS (show $ zCopyright z_root)
   tell "\n"
   tell "-- |The content of the @homepage@ field of the package's Cabal file.\n"
   tell "homepage :: String\n"
   tell "homepage = "
-  tell (show $ zHomepage z_root)
+  tellS (show $ zHomepage z_root)
   tell "\n"

@@ -161,7 +161,6 @@ import Distribution.Simple.Utils
   , installExecutableFile
   , maybeExit
   , rawSystemProc
-  , rewriteFileEx
   , rewriteFileLBS
   , tryFindPackageDesc
   )
@@ -187,6 +186,7 @@ import System.IO (Handle, hPutStr)
 import System.Process (StdStream (..))
 import qualified System.Process as Process
 
+import qualified Data.ByteString.Builder as BSB
 import qualified Data.ByteString.Lazy as BS
 import Distribution.Client.Errors
 
@@ -1149,8 +1149,9 @@ getExternalSetupMethod verbosity options pkg bt = do
                   }
           let ghcCmdLine = renderGhcOptions compiler platform ghcOptions
           when (useVersionMacros options') $
-            rewriteFileEx verbosity (i cppMacrosFile) $
-              generatePackageVersionMacros (pkgVersion $ package pkg) (map snd selectedDeps)
+            rewriteFileLBS verbosity (i cppMacrosFile)
+              $ BSB.toLazyByteString
+              $ generatePackageVersionMacros (pkgVersion $ package pkg) (map snd selectedDeps)
           case useLoggingHandle options of
             Nothing -> runDbProgramCwd verbosity mbWorkDir program progdb ghcCmdLine
             -- If build logging is enabled, redirect compiler output to

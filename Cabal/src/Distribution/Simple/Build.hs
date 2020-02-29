@@ -1,9 +1,12 @@
-{-# LANGUAGE CPP #-}
-{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE CPP                   #-}
+{-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE DuplicateRecordFields #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE TupleSections #-}
+{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE LambdaCase            #-}
+{-# LANGUAGE NamedFieldPuns        #-}
+{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE RankNTypes            #-}
+{-# LANGUAGE TupleSections         #-}
 
 -----------------------------------------------------------------------------
 
@@ -124,6 +127,7 @@ import Distribution.Version (thisVersion)
 import Distribution.Compat.Graph (IsNode (..))
 
 import Control.Monad
+import qualified Data.ByteString.Builder as BSB
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.Map as Map
 import Distribution.Simple.Errors
@@ -1171,11 +1175,11 @@ builtinAutogenFiles pkg lbi clbi =
         emptySignatureModules clbi
   where
     pathsFile = AutogenModule (autogenPathsModuleName pkg) (Suffix "hs")
-    pathsContents = toUTF8LBS $ generatePathsModule pkg lbi clbi
+    pathsContents = BSB.toLazyByteString $ generatePathsModule pkg lbi clbi
     packageInfoFile = AutogenModule (autogenPackageInfoModuleName pkg) (Suffix "hs")
-    packageInfoContents = toUTF8LBS $ generatePackageInfoModule pkg lbi
+    packageInfoContents = generatePackageInfoModule pkg lbi
     cppHeaderFile = AutogenFile $ toShortText cppHeaderName
-    cppHeaderContents = toUTF8LBS $ generateCabalMacrosHeader pkg lbi clbi
+    cppHeaderContents = BSB.toLazyByteString $ generateCabalMacrosHeader pkg lbi clbi
 
 -- | An empty @".hsig"@ Backpack signature module for each requirement, so that
 -- GHC has a source file to look at it when it needs to typecheck
@@ -1199,12 +1203,11 @@ emptySignatureModules clbi =
   where
     emptyHsigFile :: ModuleName -> AutogenFileContents
     emptyHsigFile modName =
-      toUTF8LBS $
-        "{-# OPTIONS_GHC -w #-}\n"
-          ++ "{-# LANGUAGE NoImplicitPrelude #-}\n"
-          ++ "signature "
-          ++ prettyShow modName
-          ++ " where"
+      "{-# OPTIONS_GHC -w #-}\n"
+        <> "{-# LANGUAGE NoImplicitPrelude #-}\n"
+        <> "signature "
+        <> toUTF8LBS (prettyShow modName)
+        <> " where"
 
 data AutogenFile
   = AutogenModule !ModuleName !Suffix

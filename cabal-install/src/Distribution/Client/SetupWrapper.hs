@@ -90,7 +90,7 @@ import Distribution.Simple.Utils
          ( die', debug, info, infoNoWrap
          , cabalVersion, tryFindPackageDesc
          , createDirectoryIfMissingVerbose, installExecutableFile
-         , copyFileVerbose, rewriteFileEx, rewriteFileLBS )
+         , copyFileVerbose, rewriteFileLBS )
 import Distribution.Client.Utils
          ( inDir, tryCanonicalizePath, withExtraPathEnv
          , existsAndIsMoreRecentThan, moreRecentFile, withEnv, withEnvOverrides
@@ -117,6 +117,7 @@ import Data.List           ( foldl1' )
 import Distribution.Client.Compat.ExecutablePath  ( getExecutablePath )
 
 import qualified Data.ByteString.Lazy as BS
+import qualified Data.ByteString.Builder as BSB
 
 #ifdef mingw32_HOST_OS
 import Distribution.Simple.Utils
@@ -902,7 +903,8 @@ getExternalSetupMethod verbosity options pkg bt = do
             }
       let ghcCmdLine = renderGhcOptions compiler platform ghcOptions
       when (useVersionMacros options') $
-        rewriteFileEx verbosity cppMacrosFile
+        rewriteFileLBS verbosity cppMacrosFile
+          $ BSB.toLazyByteString
           $ generatePackageVersionMacros (pkgVersion $ package pkg) (map snd selectedDeps)
       case useLoggingHandle options of
         Nothing          -> runDbProgram verbosity program progdb ghcCmdLine

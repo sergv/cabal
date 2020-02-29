@@ -39,8 +39,10 @@ import Distribution.Version
 
 import qualified Distribution.Simple.Build.Macros.Z as Z
 
+import Data.ByteString.Builder (Builder)
+
 -- | The contents of the @cabal_macros.h@ for the given configured package.
-generateCabalMacrosHeader :: PackageDescription -> LocalBuildInfo -> ComponentLocalBuildInfo -> String
+generateCabalMacrosHeader :: PackageDescription -> LocalBuildInfo -> ComponentLocalBuildInfo -> Builder
 generateCabalMacrosHeader pkg_descr lbi clbi =
   Z.render
     Z.Z
@@ -76,7 +78,7 @@ generateCabalMacrosHeader pkg_descr lbi clbi =
 -- | Helper function that generates just the @VERSION_pkg@ and @MIN_VERSION_pkg@
 -- macros for a list of package ids (usually used with the specific deps of
 -- a configured package).
-generatePackageVersionMacros :: Version -> [PackageId] -> String
+generatePackageVersionMacros :: Version -> [PackageId] -> Builder
 generatePackageVersionMacros ver pkgids =
   Z.render
     Z.Z

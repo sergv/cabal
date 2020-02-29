@@ -146,7 +146,6 @@ import Distribution.Simple.Utils
   , installExecutableFile
   , maybeExit
   , rawSystemProc
-  , rewriteFileEx
   , rewriteFileLBS
   , tryFindPackageDesc
   )
@@ -186,6 +185,10 @@ import Data.Functor ((<&>))
 import System.IO (Handle, hPutStr)
 import System.Process (StdStream (..))
 import qualified System.Process as Process
+
+import qualified Data.ByteString.Builder as BSB
+import qualified Data.ByteString.Lazy as BS
+import Distribution.Client.Errors
 
 #ifdef mingw32_HOST_OS
 import Distribution.Simple.Utils
@@ -1343,7 +1346,7 @@ compileSetupX
           ]
       let ghcCmdLine = renderGhcOptions compiler platform ghcOptions
       when (useVersionMacros options') $
-        rewriteFileEx verbosity (i cppMacrosFile) $
+        rewriteFileLBS verbosity (i cppMacrosFile) $ BSB.toLazyByteString $
           generatePackageVersionMacros (pkgVersion pkgId) (map snd selectedDeps)
       case useLoggingHandle options' of
         Nothing -> runDbProgramCwd verbosity mbWorkDir program progdb ghcCmdLine

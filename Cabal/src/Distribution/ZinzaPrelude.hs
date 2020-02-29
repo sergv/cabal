@@ -13,7 +13,8 @@ module Distribution.ZinzaPrelude (
     Builder,
     tellC,
     tellB,
-    tellS
+    tellS,
+    tellI
     ) where
 
 import Distribution.Compat.Prelude
@@ -58,3 +59,6 @@ tellB = tell . BSB.byteString
 
 tellS :: String -> Writer ()
 tellS = tell . BSB.string8
+
+tellI :: Int -> Writer ()
+tellI = tell . BSB.intDec

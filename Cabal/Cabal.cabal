@@ -82,6 +82,9 @@ library
   if impl(ghc >= 9.14)
     ghc-options: -Wno-pattern-namespace-specifier -Wno-incomplete-record-selectors
 
+  if impl(ghc < 7.8)
+    build-depends:  bytestring-builder >= 0.10 && < 0.11
+
   exposed-modules:
     Distribution.Backpack.Configure
     Distribution.Backpack.ComponentsGraph

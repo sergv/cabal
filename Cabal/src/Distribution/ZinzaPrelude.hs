@@ -9,18 +9,26 @@ module Distribution.ZinzaPrelude (
     Generic,
     PackageName,
     Version,
-    prettyShow
+    prettyShow,
+    Builder,
+    tellC,
+    tellB,
+    tellS
     ) where
 
 import Distribution.Compat.Prelude
 import Prelude ()
 
 import Control.Monad                  (forM_)
+import Data.ByteString.Builder        (Builder)
 import Distribution.Pretty            (prettyShow)
 import Distribution.Types.PackageName (PackageName)
 import Distribution.Types.Version     (Version)
 
-newtype Writer a = W { unW :: ShowS -> (ShowS, a) }
+import qualified Data.ByteString as BS
+import qualified Data.ByteString.Builder as BSB
+
+newtype Writer a = W { unW :: Builder -> (Builder, a) }
 
 instance Functor Writer where
     fmap = liftM
@@ -36,8 +44,17 @@ instance Monad Writer where
         in unW (k x) s2
     {-# INLINE (>>=) #-}
 
-execWriter :: Writer a -> String
-execWriter w = fst (unW w id) ""
+execWriter :: Writer a -> Builder
+execWriter w = fst (unW w mempty)
 
-tell :: String -> Writer ()
-tell s = W $ \s' -> (s' . showString s, ())
+tell :: Builder -> Writer ()
+tell s = W $ \s' -> (s' <> s, ())
+
+tellC :: Char -> Writer ()
+tellC = tell . BSB.char8
+
+tellB :: BS.ByteString -> Writer ()
+tellB = tell . BSB.byteString
+
+tellS :: String -> Writer ()
+tellS = tell . BSB.string8

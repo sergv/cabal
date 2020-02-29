@@ -14,6 +14,9 @@
 -- enables them to find their version number and find any installed data files
 -- at runtime. This code should probably be split off into another module.
 --
+
+{-# LANGUAGE OverloadedStrings #-}
+
 module Distribution.Simple.Build.PathsModule (
     generatePathsModule, pkgPathEnvVar
   ) where
@@ -31,11 +34,14 @@ import Distribution.Version
 
 import qualified Distribution.Simple.Build.PathsModule.Z as Z
 
+import Data.ByteString.Builder (Builder)
+import qualified Data.ByteString.Builder as BSB
+
 -- ------------------------------------------------------------
 -- * Building Paths_<pkg>.hs
 -- ------------------------------------------------------------
 
-generatePathsModule :: PackageDescription -> LocalBuildInfo -> ComponentLocalBuildInfo -> String
+generatePathsModule :: PackageDescription -> LocalBuildInfo -> ComponentLocalBuildInfo -> Builder
 generatePathsModule pkg_descr lbi clbi = Z.render Z.Z
     { Z.zPackageName                = packageName pkg_descr
     , Z.zVersionDigits              = show $ versionNumbers $ packageVersion pkg_descr
@@ -47,7 +53,7 @@ generatePathsModule pkg_descr lbi clbi = Z.render Z.Z
     , Z.zIsI386                     = buildArch == I386
     , Z.zIsX8664                    = buildArch == X86_64
     , Z.zNot                        = not
-    , Z.zManglePkgName              = showPkgName
+    , Z.zManglePkgName              = BSB.string8 . showPkgName
 
     , Z.zPrefix     = show flat_prefix
     , Z.zBindir     = zBindir
@@ -122,7 +128,7 @@ generatePathsModule pkg_descr lbi clbi = Z.render Z.Z
             , show flat_sysconfdir
             )
         | isWindows       =
-            ( "maybe (error \"PathsModule.generate\") id (" ++ show flat_bindirrel ++ ")"
+            ( "maybe (error \"PathsModule.generate\") id (" <> show flat_bindirrel <> ")"
             , mkGetDir flat_libdir flat_libdirrel
             , mkGetDir flat_dynlibdir flat_dynlibdirrel
             , mkGetDir flat_datadir flat_datadirrel

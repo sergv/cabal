@@ -1,4 +1,5 @@
-{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE OverloadedStrings #-}
 module Distribution.Simple.Build.PathsModule.Z (render, Z(..)) where
 import Distribution.ZinzaPrelude
 data Z
@@ -19,9 +20,9 @@ data Z
          zLibexecdir :: FilePath,
          zSysconfdir :: FilePath,
          zNot :: (Bool -> Bool),
-         zManglePkgName :: (PackageName -> String)}
+         zManglePkgName :: (PackageName -> Builder)}
     deriving Generic
-render :: Z -> String
+render :: Z -> Builder
 render z_root = execWriter $ do
   if (zSupportsCpp z_root)
   then do
@@ -94,7 +95,7 @@ render z_root = execWriter $ do
   tell "\n"
   tell "version :: Version\n"
   tell "version = Version "
-  tell (zVersionDigits z_root)
+  tellS (zVersionDigits z_root)
   tell " []\n"
   tell "\n"
   tell "getDataFileName :: FilePath -> IO FilePath\n"
@@ -113,38 +114,38 @@ render z_root = execWriter $ do
     tell "  exePath <- getExecutablePath\n"
     tell "  let (dir,_) = splitFileName exePath\n"
     tell "  return ((dir `minusFileName` "
-    tell (zBindir z_root)
+    tellS (zBindir z_root)
     tell ") `joinFileName` dirRel)\n"
     tell "\n"
     tell "getBinDir     = catchIO (getEnv \""
     tell (zManglePkgName z_root (zPackageName z_root))
     tell "_bindir\")     (\\_ -> getPrefixDirReloc $ "
-    tell (zBindir z_root)
+    tellS (zBindir z_root)
     tell ")\n"
     tell "getLibDir     = catchIO (getEnv \""
     tell (zManglePkgName z_root (zPackageName z_root))
     tell "_libdir\")     (\\_ -> getPrefixDirReloc $ "
-    tell (zLibdir z_root)
+    tellS (zLibdir z_root)
     tell ")\n"
     tell "getDynLibDir  = catchIO (getEnv \""
     tell (zManglePkgName z_root (zPackageName z_root))
     tell "_dynlibdir\")  (\\_ -> getPrefixDirReloc $ "
-    tell (zDynlibdir z_root)
+    tellS (zDynlibdir z_root)
     tell ")\n"
     tell "getDataDir    = catchIO (getEnv \""
     tell (zManglePkgName z_root (zPackageName z_root))
     tell "_datadir\")    (\\_ -> getPrefixDirReloc $ "
-    tell (zDatadir z_root)
+    tellS (zDatadir z_root)
     tell ")\n"
     tell "getLibexecDir = catchIO (getEnv \""
     tell (zManglePkgName z_root (zPackageName z_root))
     tell "_libexecdir\") (\\_ -> getPrefixDirReloc $ "
-    tell (zLibexecdir z_root)
+    tellS (zLibexecdir z_root)
     tell ")\n"
     tell "getSysconfDir = catchIO (getEnv \""
     tell (zManglePkgName z_root (zPackageName z_root))
     tell "_sysconfdir\") (\\_ -> getPrefixDirReloc $ "
-    tell (zSysconfdir z_root)
+    tellS (zSysconfdir z_root)
     tell ")\n"
     tell "\n"
     return ()
@@ -154,22 +155,22 @@ render z_root = execWriter $ do
       tell "\n"
       tell "bindir, libdir, dynlibdir, datadir, libexecdir, sysconfdir :: FilePath\n"
       tell "bindir     = "
-      tell (zBindir z_root)
+      tellS (zBindir z_root)
       tell "\n"
       tell "libdir     = "
-      tell (zLibdir z_root)
+      tellS (zLibdir z_root)
       tell "\n"
       tell "dynlibdir  = "
-      tell (zDynlibdir z_root)
+      tellS (zDynlibdir z_root)
       tell "\n"
       tell "datadir    = "
-      tell (zDatadir z_root)
+      tellS (zDatadir z_root)
       tell "\n"
       tell "libexecdir = "
-      tell (zLibexecdir z_root)
+      tellS (zLibexecdir z_root)
       tell "\n"
       tell "sysconfdir = "
-      tell (zSysconfdir z_root)
+      tellS (zSysconfdir z_root)
       tell "\n"
       tell "\n"
       tell "getBinDir     = catchIO (getEnv \""
@@ -198,28 +199,28 @@ render z_root = execWriter $ do
         tell "\n"
         tell "prefix :: FilePath\n"
         tell "prefix = "
-        tell (zPrefix z_root)
+        tellS (zPrefix z_root)
         tell "\n"
         tell "\n"
         tell "getBinDir     = getPrefixDirRel $ "
-        tell (zBindir z_root)
+        tellS (zBindir z_root)
         tell "\n"
         tell "getLibDir     = "
-        tell (zLibdir z_root)
+        tellS (zLibdir z_root)
         tell "\n"
         tell "getDynLibDir  = "
-        tell (zDynlibdir z_root)
+        tellS (zDynlibdir z_root)
         tell "\n"
         tell "getDataDir    = catchIO (getEnv \""
         tell (zManglePkgName z_root (zPackageName z_root))
         tell "_datadir\")    (\\_ -> "
-        tell (zDatadir z_root)
+        tellS (zDatadir z_root)
         tell ")\n"
         tell "getLibexecDir = "
-        tell (zLibexecdir z_root)
+        tellS (zLibexecdir z_root)
         tell "\n"
         tell "getSysconfDir = "
-        tell (zSysconfdir z_root)
+        tellS (zSysconfdir z_root)
         tell "\n"
         tell "\n"
         tell "getPrefixDirRel :: FilePath -> IO FilePath\n"
@@ -233,7 +234,7 @@ render z_root = execWriter $ do
         tell "              exePath <- peekCWString buf\n"
         tell "              let (bindir,_) = splitFileName exePath\n"
         tell "              return ((bindir `minusFileName` "
-        tell (zBindir z_root)
+        tellS (zBindir z_root)
         tell ") `joinFileName` dirRel)\n"
         tell "            | otherwise  -> try_size (size * 2)\n"
         tell "\n"
@@ -316,3 +317,4 @@ render z_root = execWriter $ do
   else do
     tell "isPathSeparator c = c == '/'\n"
     return ()
+

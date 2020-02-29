@@ -15,6 +15,9 @@ module Distribution.Simple.Build.PackageInfoModule
   ( generatePackageInfoModule
   ) where
 
+import qualified Data.ByteString.Lazy as BSL
+import qualified Data.ByteString.Builder as BSB
+
 import Distribution.Compat.Prelude
 import Prelude ()
 
@@ -33,8 +36,9 @@ import qualified Distribution.Simple.Build.PackageInfoModule.Z as Z
 
 -- ------------------------------------------------------------
 
-generatePackageInfoModule :: PackageDescription -> LocalBuildInfo -> String
+generatePackageInfoModule :: PackageDescription -> LocalBuildInfo -> BSL.ByteString
 generatePackageInfoModule pkg_descr lbi =
+  BSB.toLazyByteString $
   Z.render
     Z.Z
       { Z.zPackageName = showPkgName $ packageName pkg_descr

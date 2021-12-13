@@ -173,6 +173,8 @@ import           Data.List (groupBy, deleteBy)
 import qualified Data.List.NonEmpty as NE
 import           System.FilePath
 
+import GHC.Stack (HasCallStack)
+
 ------------------------------------------------------------------------------
 -- * Elaborated install plan
 ------------------------------------------------------------------------------
@@ -226,7 +228,8 @@ import           System.FilePath
 -- | Check that an 'ElaboratedConfiguredPackage' actually makes
 -- sense under some 'ElaboratedSharedConfig'.
 sanityCheckElaboratedConfiguredPackage
-    :: ElaboratedSharedConfig
+    :: HasCallStack
+    => ElaboratedSharedConfig
     -> ElaboratedConfiguredPackage
     -> a
     -> a
@@ -255,7 +258,8 @@ sanityCheckElaboratedConfiguredPackage sharedConfig
      optStanzaSetNull elabStanzasAvailable)
 
 sanityCheckElaboratedComponent
-    :: ElaboratedConfiguredPackage
+    :: HasCallStack
+    => ElaboratedConfiguredPackage
     -> ElaboratedComponent
     -> a
     -> a
@@ -3440,7 +3444,8 @@ computeInstallDirs storeDirLayout defaultInstallDirs elaboratedShared elab
 -- make the various Setup.hs {configure,build,copy} flags
 
 
-setupHsConfigureFlags :: ElaboratedReadyPackage
+setupHsConfigureFlags :: HasCallStack
+                      => ElaboratedReadyPackage
                       -> ElaboratedSharedConfig
                       -> Verbosity
                       -> FilePath

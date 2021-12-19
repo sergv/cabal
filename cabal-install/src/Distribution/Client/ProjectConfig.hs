@@ -58,6 +58,8 @@ module Distribution.Client.ProjectConfig (
     BadPerPackageCompilerPaths(..)
   ) where
 
+import qualified Debug.Trace
+
 import Prelude ()
 import Distribution.Client.Compat.Prelude
 
@@ -350,6 +352,7 @@ resolveBuildTimeSettings verbosity
     buildSettingLogFile :: Maybe (Compiler -> Platform
                                -> PackageId -> UnitId -> FilePath)
     buildSettingLogFile
+      | Debug.Trace.trace ("buildSettingBuildReports = " ++ show buildSettingBuildReports ++ "\nprojectConfigBuildOnly = " ++ show projectConfigBuildOnly ++ ", useDefaultTemplate = " ++ show useDefaultTemplate) $ False = undefined
       | useDefaultTemplate = Just (substLogFileName defaultTemplate)
       | otherwise          = fmap  substLogFileName givenTemplate
 

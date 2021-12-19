@@ -28,11 +28,11 @@ regularCmd :: (HasVerbosity flags) => CommandUI flags -> (flags -> [String] -> g
 regularCmd ui action =
         CommandSpec ui ((flip commandAddAction) (\flags extra globals -> action flags extra globals)) NormalCommand
 
-wrapperCmd :: Monoid flags => CommandUI flags -> (flags -> Setup.Flag Verbosity) -> (flags -> Setup.Flag String) -> CommandSpec (Client.GlobalFlags -> IO ())
+wrapperCmd :: (Monoid flags, Show flags) => CommandUI flags -> (flags -> Setup.Flag Verbosity) -> (flags -> Setup.Flag String) -> CommandSpec (Client.GlobalFlags -> IO ())
 wrapperCmd ui verbosity' distPref =
   CommandSpec ui (\ui' -> wrapperAction ui' verbosity' distPref) NormalCommand
 
-wrapperAction :: Monoid flags => CommandUI flags -> (flags -> Setup.Flag Verbosity) -> (flags -> Setup.Flag String) -> Command (Client.GlobalFlags -> IO ())
+wrapperAction :: (Monoid flags, Show flags) => CommandUI flags -> (flags -> Setup.Flag Verbosity) -> (flags -> Setup.Flag String) -> Command (Client.GlobalFlags -> IO ())
 wrapperAction command verbosityFlag distPrefFlag =
   commandAddAction command
     { commandDefaultFlags = mempty } $ \flags extraArgs globalFlags -> do
@@ -119,7 +119,7 @@ toLegacyCmd mkSpec = [toLegacy mkSpec]
 legacyCmd :: (HasVerbosity flags) => CommandUI flags -> (flags -> [String] -> globals -> IO action) -> [CommandSpec (globals -> IO action)]
 legacyCmd ui action = toLegacyCmd (regularCmd ui action)
 
-legacyWrapperCmd :: Monoid flags => CommandUI flags -> (flags -> Setup.Flag Verbosity) -> (flags -> Setup.Flag String) -> [CommandSpec (Client.GlobalFlags -> IO ())]
+legacyWrapperCmd :: (Monoid flags, Show flags) => CommandUI flags -> (flags -> Setup.Flag Verbosity) -> (flags -> Setup.Flag String) -> [CommandSpec (Client.GlobalFlags -> IO ())]
 legacyWrapperCmd ui verbosity' distPref = toLegacyCmd (wrapperCmd ui verbosity' distPref)
 
 newCmd :: CommandUI flags -> (flags -> [String] -> globals -> IO action) -> [CommandSpec (globals -> IO action)]

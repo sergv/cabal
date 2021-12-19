@@ -1,5 +1,7 @@
 {-# LANGUAGE DeriveGeneric, DeriveDataTypeable, GeneralizedNewtypeDeriving #-}
 
+{-# LANGUAGE FlexibleInstances #-}
+
 -- | Handling project configuration, types.
 --
 module Distribution.Client.ProjectConfig.Types (
@@ -459,3 +461,7 @@ data BuildTimeSettings
        buildSettingProgPathExtra         :: [FilePath],
        buildSettingHaddockOpen           :: Bool
      }
+   deriving (Show)
+
+instance Show (Compiler -> Platform -> PackageId -> UnitId -> FilePath) where
+  show _ = "\"function :: Compiler -> Platform -> PackageId -> UnitId -> FilePath\""

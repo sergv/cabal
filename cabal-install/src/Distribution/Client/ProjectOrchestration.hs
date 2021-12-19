@@ -100,6 +100,8 @@ module Distribution.Client.ProjectOrchestration (
     establishDummyDistDirLayout,
   ) where
 
+import GHC.Stack (HasCallStack)
+
 import Prelude ()
 import Distribution.Client.Compat.Prelude
 import Distribution.Compat.Directory
@@ -199,6 +201,7 @@ data ProjectBaseContext = ProjectBaseContext {
        buildSettings  :: BuildTimeSettings,
        currentCommand :: CurrentCommand
      }
+  deriving (Show)
 
 establishProjectBaseContext
     :: Verbosity
@@ -290,7 +293,7 @@ data ProjectBuildContext = ProjectBuildContext {
       -- CmdRun, where we need a valid target to execute.
       targetsMap             :: TargetsMap
     }
-
+  deriving (Show)
 
 -- | Pre-build phase: decide what to do.
 --
@@ -376,7 +379,7 @@ runProjectPreBuildPhase
 -- Execute all or parts of the description of what to do to build or
 -- rebuild the various packages needed.
 --
-runProjectBuildPhase :: Verbosity
+runProjectBuildPhase :: HasCallStack => Verbosity
                      -> ProjectBaseContext
                      -> ProjectBuildContext
                      -> IO BuildOutcomes

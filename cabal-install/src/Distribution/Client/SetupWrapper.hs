@@ -23,6 +23,9 @@ module Distribution.Client.SetupWrapper (
     defaultSetupScriptOptions,
   ) where
 
+import qualified Debug.Trace
+import GHC.Stack (HasCallStack)
+
 import Prelude ()
 import Distribution.Client.Compat.Prelude
 
@@ -147,6 +150,7 @@ data SetupMethod = InternalMethod
                    -- child process
                  | ExternalMethod FilePath
                    -- ^ run Cabal commands through a custom \"Setup\" executable
+                 deriving (Show)
 
 -- TODO: The 'setupWrapper' and 'SetupScriptOptions' should be split into two
 -- parts: one that has no policy and just does as it's told with all the
@@ -344,7 +348,8 @@ runSetupMethod (ExternalMethod path) = externalSetupMethod path
 runSetupMethod SelfExecMethod = selfExecSetupMethod
 
 -- | Run a configured 'Setup' with specific arguments.
-runSetup :: Verbosity -> Setup
+runSetup :: HasCallStack
+         => Verbosity -> Setup
          -> [String]  -- ^ command-line arguments
          -> IO ()
 runSetup verbosity setup args0 = do
@@ -352,6 +357,7 @@ runSetup verbosity setup args0 = do
       options = setupScriptOptions setup
       bt = setupBuildType setup
       args = verbosityHack (setupVersion setup) args0
+  putStrLn $ "Using setup method: " ++ show method
   when (verbosity >= deafening {- avoid test if not debug -} && args /= args0) $
     infoNoWrap verbose $
         "Applied verbosity hack:\n" ++
@@ -392,7 +398,7 @@ verbosityHack ver args0
             _ -> Nothing
 
 -- | Run a command through a configured 'Setup'.
-runSetupCommand :: Verbosity -> Setup
+runSetupCommand :: HasCallStack => Verbosity -> Setup
                 -> CommandUI flags  -- ^ command definition
                 -> flags  -- ^ command flags
                 -> [String] -- ^ extra command-line arguments
@@ -403,7 +409,7 @@ runSetupCommand verbosity setup cmd flags extraArgs = do
 
 -- | Configure a 'Setup' and run a command in one step. The command flags
 -- may depend on the Cabal library version in use.
-setupWrapper :: Verbosity
+setupWrapper :: (HasCallStack, Show flags) => Verbosity
              -> SetupScriptOptions
              -> Maybe PackageDescription
              -> CommandUI flags
@@ -413,6 +419,10 @@ setupWrapper :: Verbosity
              -> IO ()
 setupWrapper verbosity options mpkg cmd flags extraArgs = do
   setup <- getSetup verbosity options mpkg
+  Debug.Trace.traceM $
+    "setupWrapper: setupVersion setup = " ++ show (setupVersion setup) ++
+    "\nflags (setupVersion setup) = " ++ show (flags (setupVersion setup)) ++
+    "\nextraArgs (setupVersion setup) = " ++ show (extraArgs (setupVersion setup))
   runSetupCommand verbosity setup
                   cmd (flags $ setupVersion setup)
                       (extraArgs $ setupVersion setup)
@@ -421,7 +431,7 @@ setupWrapper verbosity options mpkg cmd flags extraArgs = do
 -- * Internal SetupMethod
 -- ------------------------------------------------------------
 
-internalSetupMethod :: SetupRunner
+internalSetupMethod :: HasCallStack => SetupRunner
 internalSetupMethod verbosity options bt args = do
   info verbosity $ "Using internal setup method with build-type " ++ show bt
                 ++ " and args:\n  " ++ show args
@@ -431,7 +441,7 @@ internalSetupMethod verbosity options bt args = do
         withEnvOverrides (useExtraEnvOverrides options) $
           buildTypeAction bt args
 
-buildTypeAction :: BuildType -> ([String] -> IO ())
+buildTypeAction :: HasCallStack => BuildType -> ([String] -> IO ())
 buildTypeAction Simple    = Simple.defaultMainArgs
 buildTypeAction Configure = Simple.defaultMainWithHooksArgs
                               Simple.autoconfUserHooks

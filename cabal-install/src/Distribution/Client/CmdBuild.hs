@@ -11,6 +11,10 @@ module Distribution.Client.CmdBuild (
     selectComponentTarget
   ) where
 
+import qualified Debug.Trace
+
+import GHC.Stack (HasCallStack)
+
 import Prelude ()
 import Distribution.Client.Compat.Prelude
 
@@ -81,6 +85,7 @@ buildCommand = CommandUI {
 data BuildFlags = BuildFlags
     { buildOnlyConfigure  :: Flag Bool
     }
+  deriving (Show)
 
 defaultBuildFlags :: BuildFlags
 defaultBuildFlags = BuildFlags
@@ -94,7 +99,7 @@ defaultBuildFlags = BuildFlags
 -- For more details on how this works, see the module
 -- "Distribution.Client.ProjectOrchestration"
 --
-buildAction :: NixStyleFlags BuildFlags -> [String] -> GlobalFlags -> IO ()
+buildAction :: HasCallStack => NixStyleFlags BuildFlags -> [String] -> GlobalFlags -> IO ()
 buildAction flags@NixStyleFlags { extraFlags = buildFlags, ..} targetStrings globalFlags = do
     -- TODO: This flags defaults business is ugly
     let onlyConfigure = fromFlag (buildOnlyConfigure defaultBuildFlags
@@ -134,6 +139,12 @@ buildAction flags@NixStyleFlags { extraFlags = buildFlags, ..} targetStrings glo
                 else return elaboratedPlan'
 
             return (elaboratedPlan'', targets)
+
+    Debug.Trace.traceM $ "buildAction: globalFlags =\n" ++ show globalFlags
+    Debug.Trace.traceM $ "buildAction: flags =\n" ++ show flags
+    Debug.Trace.traceM $ "buildAction: cliConfig =\n" ++ show cliConfig
+    Debug.Trace.traceM $ "buildAction: baseCtx =\n" ++ show baseCtx
+    -- Debug.Trace.traceM $ "buildAction: buildCtx =\n" ++ show buildCtx
 
     printPlan verbosity baseCtx buildCtx
 

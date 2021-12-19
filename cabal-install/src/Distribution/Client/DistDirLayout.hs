@@ -1,5 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 
+{-# LANGUAGE FlexibleInstances #-}
+
 -- |
 --
 -- The layout of the .\/dist\/ directory where cabal keeps all of its state
@@ -120,7 +122,22 @@ data DistDirLayout = DistDirLayout {
 
        distPackageDB                :: CompilerId -> PackageDB
      }
+  deriving (Show)
 
+instance Show (DistDirParams -> FilePath) where
+  show _ = "\"function :: DistDirParams -> FilePath\""
+
+instance Show (DistDirParams -> String -> FilePath) where
+  show _ = "\"function :: DistDirParams -> String -> FilePath\""
+
+instance Show (String -> FilePath) where
+  show _ = "\"function :: String -> FilePath\""
+
+instance Show (PackageId -> FilePath) where
+  show _ = "\"function :: PackageId -> FilePath\""
+
+instance Show (CompilerId -> PackageDB) where
+  show _ = "\"function :: CompilerId -> PackageDB\""
 
 -- | The layout of a cabal nix-style store.
 --
@@ -134,6 +151,8 @@ data StoreDirLayout = StoreDirLayout {
        storeIncomingLock      :: CompilerId -> UnitId -> FilePath
      }
 
+instance Show StoreDirLayout where
+  show _ = "StoreDirLayout {}"
 
 --TODO: move to another module, e.g. CabalDirLayout?
 -- or perhaps rename this module to DirLayouts.
@@ -149,7 +168,7 @@ data CabalDirLayout = CabalDirLayout {
 
        cabalLogsDirectory         :: FilePath
      }
-
+  deriving (Show)
 
 -- | Information about the root directory of the project.
 --

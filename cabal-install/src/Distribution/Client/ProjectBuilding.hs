@@ -38,6 +38,9 @@ module Distribution.Client.ProjectBuilding (
     BuildFailureReason(..),
   ) where
 
+import qualified Debug.Trace
+import GHC.Stack (HasCallStack)
+
 import Distribution.Client.Compat.Prelude
 import Prelude ()
 
@@ -558,7 +561,7 @@ invalidatePackageRegFileMonitor PackageFileMonitor{pkgFileMonitorReg} =
 --
 -- It requires the 'BuildStatusMap' gathered by 'rebuildTargetsDryRun'.
 --
-rebuildTargets :: Verbosity
+rebuildTargets :: HasCallStack => Verbosity
                -> DistDirLayout
                -> StoreDirLayout
                -> ElaboratedInstallPlan
@@ -602,7 +605,9 @@ rebuildTargets verbosity
     -- Before traversing the install plan, pre-emptively find all packages that
     -- will need to be downloaded and start downloading them.
     asyncDownloadPackages verbosity withRepoCtx
-                          installPlan pkgsBuildStatus $ \downloadMap ->
+                          installPlan pkgsBuildStatus $ \downloadMap -> do
+
+      Debug.Trace.traceM $ "rebuildTargets: installPlan = " ++ show installPlan
 
       -- For each package in the plan, in dependency order, but in parallel...
       InstallPlan.execute jobControl keepGoing
@@ -654,7 +659,7 @@ createPackageDBIfMissing _ _ _ _ = return ()
 
 -- | Given all the context and resources, (re)build an individual package.
 --
-rebuildTarget :: Verbosity
+rebuildTarget :: HasCallStack => Verbosity
               -> DistDirLayout
               -> StoreDirLayout
               -> BuildTimeSettings
@@ -710,7 +715,7 @@ rebuildTarget verbosity
           --TODO: [nice to have] git/darcs repos etc
 
 
-    unpackTarballPhase :: FilePath -> IO BuildResult
+    unpackTarballPhase :: HasCallStack => FilePath -> IO BuildResult
     unpackTarballPhase tarball =
         withTarballLocalDirectory
           verbosity distDirLayout tarball
@@ -737,7 +742,7 @@ rebuildTarget verbosity
         builddir = distBuildDirectory
                    (elabDistDirParams sharedPackageConfig pkg)
 
-    buildAndInstall :: FilePath -> FilePath -> IO BuildResult
+    buildAndInstall :: HasCallStack => FilePath -> FilePath -> IO BuildResult
     buildAndInstall srcdir builddir =
         buildAndInstallUnpackedPackage
           verbosity distDirLayout storeDirLayout
@@ -939,7 +944,7 @@ moveTarballShippedDistDirectory verbosity DistDirLayout{distBuildDirectory}
     targetDistDir  = distBuildDirectory dparams
 
 
-buildAndInstallUnpackedPackage :: Verbosity
+buildAndInstallUnpackedPackage :: HasCallStack => Verbosity
                                -> DistDirLayout
                                -> StoreDirLayout
                                -> BuildTimeSettings -> Lock -> Lock
@@ -995,7 +1000,7 @@ buildAndInstallUnpackedPackage verbosity
     -- Haddock phase
     whenHaddock $ do
       noticeProgress ProgressHaddock
-      annotateFailureNoLog HaddocksFailed $
+      annotateFailureNoLog HaddocksFailed $ do
         setup haddockCommand haddockFlags
 
     -- Install phase
@@ -1139,8 +1144,9 @@ buildAndInstallUnpackedPackage verbosity
     buildFlags   _   = setupHsBuildFlags pkg pkgshared verbosity builddir
 
     haddockCommand   = Cabal.haddockCommand
-    haddockFlags _   = setupHsHaddockFlags pkg pkgshared
-                                           verbosity builddir
+    haddockFlags _   =
+      Debug.Trace.trace ("haddockFlags:\npkg = " ++ show pkg ++ "\npkgshared = " ++ show pkgshared ++ "\nverbosity = " ++ show verbosity ++ "\nbuiddir = " ++ show builddir) $
+      setupHsHaddockFlags pkg pkgshared verbosity builddir
 
     generateInstalledPackageInfo :: IO InstalledPackageInfo
     generateInstalledPackageInfo =
@@ -1159,10 +1165,10 @@ buildAndInstallUnpackedPackage verbosity
                                          distDirLayout srcdir builddir
                                          isParallelBuild cacheLock
 
-    setup :: CommandUI flags -> (Version -> flags) -> IO ()
+    setup :: (HasCallStack, Show flags) => CommandUI flags -> (Version -> flags) -> IO ()
     setup cmd flags = setup' cmd flags (const [])
 
-    setup' :: CommandUI flags -> (Version -> flags) -> (Version -> [String])
+    setup' :: (HasCallStack, Show flags) => CommandUI flags -> (Version -> flags) -> (Version -> [String])
            -> IO ()
     setup' cmd flags args =
       withLogging $ \mLogFileHandle ->
@@ -1455,7 +1461,7 @@ buildInplaceUnpackedPackage verbosity
                                             distDirLayout srcdir builddir
                                             isParallelBuild cacheLock
 
-    setupInteractive :: CommandUI flags
+    setupInteractive :: Show flags => CommandUI flags
                      -> (Version -> flags) -> (Version -> [String]) -> IO ()
     setupInteractive cmd flags args =
       setupWrapper verbosity
@@ -1463,7 +1469,7 @@ buildInplaceUnpackedPackage verbosity
                    (Just (elabPkgDescription pkg))
                    cmd flags args
 
-    setup :: CommandUI flags -> (Version -> flags) -> (Version -> [String])
+    setup :: Show flags => CommandUI flags -> (Version -> flags) -> (Version -> [String])
           -> IO ()
     setup cmd flags args =
       setupWrapper verbosity

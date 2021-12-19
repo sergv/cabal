@@ -24,6 +24,8 @@ module Distribution.Simple.Haddock (
   haddockPackagePaths
   ) where
 
+import qualified Debug.Trace
+
 import Prelude ()
 import Distribution.Compat.Prelude
 
@@ -123,7 +125,7 @@ data HaddockArgs = HaddockArgs {
  -- ^ Re-exported modules
  argTargets :: [FilePath]
  -- ^ Modules to process.
-} deriving Generic
+} deriving (Show, Generic)
 
 -- | The FilePath of a directory, it's a monoid under '(</>)'.
 newtype Directory = Dir { unDir' :: FilePath } deriving (Read,Show,Eq,Ord)
@@ -134,6 +136,7 @@ unDir = normalise . unDir'
 type Template = String
 
 data Output = Html | Hoogle
+  deriving (Show)
 
 -- ------------------------------------------------------------------------------
 -- Haddock support
@@ -584,6 +587,8 @@ renderArgs verbosity tmpFileOpts version comp platform args k = do
              hClose h
              let pflag = "--prologue=" ++ prologueFileName
                  renderedArgs = pflag : renderPureArgs version comp platform args
+             Debug.Trace.traceM $ "args = " ++ show args
+             Debug.Trace.traceM $ "renderedArgs = " ++ show renderedArgs
              if haddockSupportsResponseFiles
                then
                  withResponseFile

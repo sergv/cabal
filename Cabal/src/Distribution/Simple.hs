@@ -56,6 +56,9 @@ module Distribution.Simple (
         emptyUserHooks,
   ) where
 
+import qualified Debug.Trace
+import GHC.Stack (HasCallStack, prettyCallStack, callStack)
+
 import Control.Exception (try)
 
 import Prelude ()
@@ -115,30 +118,30 @@ import Distribution.PackageDescription.Parsec
 -- | A simple implementation of @main@ for a Cabal setup script.
 -- It reads the package description file using IO, and performs the
 -- action specified on the command line.
-defaultMain :: IO ()
+defaultMain :: HasCallStack => IO ()
 defaultMain = getArgs >>= defaultMainHelper simpleUserHooks
 
 -- | A version of 'defaultMain' that is passed the command line
 -- arguments, rather than getting them from the environment.
-defaultMainArgs :: [String] -> IO ()
+defaultMainArgs :: HasCallStack => [String] -> IO ()
 defaultMainArgs = defaultMainHelper simpleUserHooks
 
 -- | A customizable version of 'defaultMain'.
-defaultMainWithHooks :: UserHooks -> IO ()
+defaultMainWithHooks :: HasCallStack => UserHooks -> IO ()
 defaultMainWithHooks hooks = getArgs >>= defaultMainHelper hooks
 
 -- | A customizable version of 'defaultMain' that also takes the command
 -- line arguments.
-defaultMainWithHooksArgs :: UserHooks -> [String] -> IO ()
+defaultMainWithHooksArgs :: HasCallStack => UserHooks -> [String] -> IO ()
 defaultMainWithHooksArgs = defaultMainHelper
 
 -- | Like 'defaultMain', but accepts the package description as input
 -- rather than using IO to read it.
-defaultMainNoRead :: GenericPackageDescription -> IO ()
+defaultMainNoRead :: HasCallStack => GenericPackageDescription -> IO ()
 defaultMainNoRead = defaultMainWithHooksNoRead simpleUserHooks
 
 -- | A customizable version of 'defaultMainNoRead'.
-defaultMainWithHooksNoRead :: UserHooks -> GenericPackageDescription -> IO ()
+defaultMainWithHooksNoRead :: HasCallStack => UserHooks -> GenericPackageDescription -> IO ()
 defaultMainWithHooksNoRead hooks pkg_descr =
   getArgs >>=
   defaultMainHelper hooks { readDesc = return (Just pkg_descr) }
@@ -147,13 +150,15 @@ defaultMainWithHooksNoRead hooks pkg_descr =
 -- command line arguments.
 --
 -- @since 2.2.0.0
-defaultMainWithHooksNoReadArgs :: UserHooks -> GenericPackageDescription -> [String] -> IO ()
+defaultMainWithHooksNoReadArgs :: HasCallStack => UserHooks -> GenericPackageDescription -> [String] -> IO ()
 defaultMainWithHooksNoReadArgs hooks pkg_descr =
   defaultMainHelper hooks { readDesc = return (Just pkg_descr) }
 
-defaultMainHelper :: UserHooks -> Args -> IO ()
+defaultMainHelper :: HasCallStack => UserHooks -> Args -> IO ()
 defaultMainHelper hooks args = topHandler $ do
   args' <- expandResponse args
+  Debug.Trace.traceM $ "defaultMainHelper: args = " ++ show args
+  Debug.Trace.traceM $ "defaultMainHelper: args' = " ++ show args'
   case commandsRun (globalCommand commands) commands args' of
     CommandHelp   help                 -> printHelp help
     CommandList   opts                 -> printOptionsList opts
@@ -302,8 +307,11 @@ hscolourAction hooks flags args = do
                  (getBuildConfig hooks verbosity distPref)
                  hooks flags' args
 
-haddockAction :: UserHooks -> HaddockFlags -> Args -> IO ()
+haddockAction :: HasCallStack => UserHooks -> HaddockFlags -> Args -> IO ()
 haddockAction hooks flags args = do
+  Debug.Trace.traceM $ "haddockAction: flags = " ++ show flags
+  Debug.Trace.traceM $ "haddockAction: args = " ++ show args
+  Debug.Trace.traceM $ "haddockAction: location:\n" ++ prettyCallStack callStack
   distPref <- findDistPrefOrDefault (haddockDistPref flags)
   let verbosity = fromFlag $ haddockVerbosity flags
   lbi <- getBuildConfig hooks verbosity distPref

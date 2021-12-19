@@ -38,23 +38,24 @@ constraints: these -assoc
 -- program-options
 --   ghc-options: -fno-ignore-asserts
 --
-package Cabal
-  ghc-options: -fno-ignore-asserts
 
-package cabal-testsuite
-  ghc-options: -fno-ignore-asserts
-
-package Cabal-QuickCheck
-  ghc-options: -fno-ignore-asserts
-
-package Cabal-tree-diff
-  ghc-options: -fno-ignore-asserts
-
-package Cabal-described
-  ghc-options: -fno-ignore-asserts
-
-package cabal-install-solver
-  ghc-options: -fno-ignore-asserts
-
-package cabal-install
-  ghc-options: -fno-ignore-asserts
+-- package Cabal
+--   ghc-options: -fno-ignore-asserts
+--
+-- package cabal-testsuite
+--   ghc-options: -fno-ignore-asserts
+--
+-- package Cabal-QuickCheck
+--   ghc-options: -fno-ignore-asserts
+--
+-- package Cabal-tree-diff
+--   ghc-options: -fno-ignore-asserts
+--
+-- package Cabal-described
+--   ghc-options: -fno-ignore-asserts
+--
+-- package cabal-install-solver
+--   ghc-options: -fno-ignore-asserts
+--
+-- package cabal-install
+--   ghc-options: -fno-ignore-asserts

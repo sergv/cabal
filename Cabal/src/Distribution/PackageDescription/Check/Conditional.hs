@@ -248,6 +248,6 @@ checkDuplicateModules pkg =
           dupLibsStrict = Map.keys $ Map.filter ((> 1) . fst) libMap
           dupLibsLax = Map.keys $ Map.filter ((> 1) . snd) libMap
        in if
-              | not (null dupLibsLax) -> [PackageBuildImpossible (DuplicateModule s dupLibsLax)]
+              | not (null dupLibsLax) -> [PackageBuildWarning (DuplicateModule s dupLibsLax)]
               | not (null dupLibsStrict) -> [PackageDistSuspicious (PotentialDupModule s dupLibsStrict)]
               | otherwise -> []

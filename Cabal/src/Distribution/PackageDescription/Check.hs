@@ -2150,7 +2150,7 @@ checkDuplicateModules pkg =
                    dupLibs = Map.keys $ Map.filter (>1) libMap
                in if null dupLibs
                     then []
-                    else [PackageBuildImpossible $ "Duplicate modules in " ++ s ++ ": " ++ commaSep (map prettyShow dupLibs)]
+                    else [PackageBuildWarning {- PackageBuildImpossible -} $ "Duplicate modules in " ++ s ++ ": " ++ commaSep (map prettyShow dupLibs)]
 
 -- ------------------------------------------------------------
 -- * Utils

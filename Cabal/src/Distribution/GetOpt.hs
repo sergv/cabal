@@ -21,8 +21,14 @@
 --
 -- * 'ReturnInOrder' argument order is removed.
 --
-{-# LANGUAGE TupleSections #-}
-{-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE NamedFieldPuns    #-}
+{-# LANGUAGE TupleSections     #-}
+
+{-# LANGUAGE DeriveFunctor      #-}
+{-# LANGUAGE LambdaCase         #-}
+{-# LANGUAGE StandaloneDeriving #-}
+
 module Distribution.GetOpt (
    -- * GetOpt
    getOpt, getOpt',
@@ -35,6 +41,10 @@ module Distribution.GetOpt (
    -- | See "System.Console.GetOpt" for examples
 ) where
 
+import qualified Debug.Trace
+
+import GHC.Show
+
 import Prelude ()
 import Distribution.Compat.Prelude
 
@@ -42,12 +52,14 @@ import Distribution.Compat.Prelude
 data ArgOrder a
   = RequireOrder                -- ^ no option processing after first non-option
   | Permute                     -- ^ freely intersperse options and non-options
+  deriving Show
 
 data OptDescr a =              -- description of a single options:
    Option [Char]                --    list of short option characters
           [String]              --    list of long option strings (without "--")
           (ArgDescr a)          --    argument descriptor
           String                --    explanation of option for user
+  deriving (Show)
 
 instance Functor OptDescr where
     fmap f (Option a b argDescr c) = Option a b (fmap f argDescr) c
@@ -61,6 +73,13 @@ data ArgDescr a
    | ReqArg (String       -> Either String a) String -- ^   option requires argument
    | OptArg (Maybe String -> Either String a) String -- ^   optional argument
 
+instance Show (ArgDescr a) where
+  showsPrec n = showParen (n >= 11) . \case
+    NoArg _    -> showString "NoArg"
+    ReqArg _ x -> showString "ReqArg" . showSpace . showParen True (showsPrec 1 x)
+    OptArg _ x -> showString "OptArg" . showSpace . showParen True (showsPrec 1 x)
+
+
 instance Functor ArgDescr where
     fmap f (NoArg a)    = NoArg (f a)
     fmap f (ReqArg g s) = ReqArg (fmap f . g) s
@@ -72,6 +91,9 @@ data OptKind a                -- kind of cmd line arg (internal use only):
    | NonOpt    String           --    a non-option
    | EndOfOpts                  --    end-of-options marker (i.e. "--")
    | OptErr    String           --    something went wrong...
+   deriving (Functor)
+
+deriving instance Show (OptKind ())
 
 data OptHelp = OptHelp {
       optNames :: String,
@@ -160,7 +182,8 @@ Process the command-line, and return the list of values that matched
 'getOpt' returns a triple consisting of the option arguments, a list
 of non-options, and a list of error messages.
 -}
-getOpt :: ArgOrder a                   -- non-option handling
+getOpt :: Show a
+       => ArgOrder a                   -- non-option handling
        -> [OptDescr a]                 -- option descriptors
        -> [String]                     -- the command-line arguments
        -> ([a],[String],[String])      -- (options,non-options,error messages)
@@ -172,12 +195,15 @@ This is almost the same as 'getOpt', but returns a quadruple
 consisting of the option arguments, a list of non-options, a list of
 unrecognized options, and a list of error messages.
 -}
-getOpt' :: ArgOrder a                         -- non-option handling
+getOpt' :: Show a
+        => ArgOrder a                         -- non-option handling
         -> [OptDescr a]                       -- option descriptors
         -> [String]                           -- the command-line arguments
         -> ([a],[String], [String] ,[String]) -- (options,non-options,unrecognized,error messages)
 getOpt' _        _        []         =  ([],[],[],[])
-getOpt' ordering optDescr (arg:args) = procNextOpt opt ordering
+getOpt' ordering optDescr (arg:args) =
+  Debug.Trace.trace ("getOpt': opt = " ++ show (fmap (const ()) opt) ++ ", arg = " ++ show arg) $
+  procNextOpt opt ordering
    where procNextOpt (Opt o)      _                 = (o:os,xs,us,es)
          procNextOpt (UnreqOpt u) _                 = (os,xs,u:us,es)
          procNextOpt (NonOpt x)   RequireOrder      = ([],x:rest,[],[])
@@ -190,15 +216,17 @@ getOpt' ordering optDescr (arg:args) = procNextOpt opt ordering
          (os,xs,us,es) = getOpt' ordering optDescr rest
 
 -- take a look at the next cmd line arg and decide what to do with it
-getNext :: String -> [String] -> [OptDescr a] -> (OptKind a,[String])
+getNext :: Show a => String -> [String] -> [OptDescr a] -> (OptKind a,[String])
 getNext ('-':'-':[]) rest _        = (EndOfOpts,rest)
 getNext ('-':'-':xs) rest optDescr = longOpt xs rest optDescr
 getNext ('-': x :xs) rest optDescr = shortOpt x xs rest optDescr
 getNext a            rest _        = (NonOpt a,rest)
 
 -- handle long option
-longOpt :: String -> [String] -> [OptDescr a] -> (OptKind a,[String])
-longOpt ls rs optDescr = long ads arg rs
+longOpt :: Show a => String -> [String] -> [OptDescr a] -> (OptKind a,[String])
+longOpt ls rs optDescr =
+  Debug.Trace.trace ("longOpt: opt = " ++ show opt ++ ", arg = " ++ show arg ++ ", ls = " ++ show ls ++ ", rs = " ++ show rs) $
+  long ads arg rs
    where (opt,arg) = break (=='=') ls
          getWith p = [ o  | o@(Option _ xs _ _) <- optDescr
                           , isJust (find (p opt) xs)]
@@ -212,7 +240,10 @@ longOpt ls rs optDescr = long ads arg rs
          long [NoArg  a  ] []       rest     = (Opt a,rest)
          long [NoArg  _  ] ('=':_)  rest     = (errNoArg optStr,rest)
          long [ReqArg _ d] []       []       = (errReq d optStr,[])
-         long [ReqArg f _] []       (r:rest) = (fromRes (f r),rest)
+         long [ReqArg f _] []       (r:rest) =
+           let fr = (f r)
+           in Debug.Trace.trace ("r = " ++ show r ++ ", fr = " ++ show fr) $
+           (fromRes fr,rest)
          long [ReqArg f _] ('=':xs) rest     = (fromRes (f xs),rest)
          long [OptArg f _] []       rest     = (fromRes (f Nothing),rest)
          long [OptArg f _] ('=':xs) rest     = (fromRes (f (Just xs)),rest)

@@ -24,7 +24,7 @@ module Distribution.Client.SetupWrapper (
   ) where
 
 import qualified Debug.Trace
-import GHC.Stack (HasCallStack)
+import GHC.Stack (HasCallStack, prettyCallStack, callStack)
 
 import Prelude ()
 import Distribution.Client.Compat.Prelude
@@ -422,7 +422,8 @@ setupWrapper verbosity options mpkg cmd flags extraArgs = do
   Debug.Trace.traceM $
     "setupWrapper: setupVersion setup = " ++ show (setupVersion setup) ++
     "\nflags (setupVersion setup) = " ++ show (flags (setupVersion setup)) ++
-    "\nextraArgs (setupVersion setup) = " ++ show (extraArgs (setupVersion setup))
+    "\nextraArgs (setupVersion setup) = " ++ show (extraArgs (setupVersion setup)) ++
+    "\ncalled at:\n" ++ prettyCallStack callStack
   runSetupCommand verbosity setup
                   cmd (flags $ setupVersion setup)
                       (extraArgs $ setupVersion setup)

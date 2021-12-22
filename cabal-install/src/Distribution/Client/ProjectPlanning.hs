@@ -67,6 +67,10 @@ module Distribution.Client.ProjectPlanning (
     storePackageInstallDirs'
   ) where
 
+import qualified Debug.Trace
+
+import GHC.Stack (HasCallStack, prettyCallStack, callStack)
+
 import Prelude ()
 import Distribution.Client.Compat.Prelude
 
@@ -3646,20 +3650,24 @@ setupHsBenchArgs elab =
     mapMaybe (showBenchComponentTarget (packageId elab)) (elabBenchTargets elab)
 
 
-setupHsReplFlags :: ElaboratedConfiguredPackage
+setupHsReplFlags :: HasCallStack
+                 => ElaboratedConfiguredPackage
                  -> ElaboratedSharedConfig
                  -> Verbosity
                  -> FilePath
                  -> Cabal.ReplFlags
 setupHsReplFlags _ sharedConfig verbosity builddir =
-    Cabal.ReplFlags {
-      replProgramPaths = mempty, --unused, set at configure time
-      replProgramArgs  = mempty, --unused, set at configure time
-      replVerbosity    = toFlag verbosity,
-      replDistPref     = toFlag builddir,
-      replReload       = mempty, --only used as callback from repl
-      replReplOptions  = pkgConfigReplOptions sharedConfig       --runtime override for repl flags
-    }
+  Debug.Trace.trace ("setupHSReplFlags:\nsharedConfig = " ++ show sharedConfig ++ "\nresult = " ++ show result ++"\ncalled at\n" ++ prettyCallStack callStack) $ result
+  where
+    result =
+      Cabal.ReplFlags {
+        replProgramPaths = mempty, --unused, set at configure time
+        replProgramArgs  = mempty, --unused, set at configure time
+        replVerbosity    = toFlag verbosity,
+        replDistPref     = toFlag builddir,
+        replReload       = mempty, --only used as callback from repl
+        replReplOptions  = pkgConfigReplOptions sharedConfig       --runtime override for repl flags
+      }
 
 
 setupHsReplArgs :: ElaboratedConfiguredPackage -> [String]

@@ -754,7 +754,7 @@ rebuildTarget verbosity
         builddir' = makeRelative srcdir builddir
         --TODO: [nice to have] ^^ do this relative stuff better
 
-    buildInplace :: BuildStatusRebuild -> FilePath -> FilePath -> IO BuildResult
+    buildInplace :: HasCallStack => BuildStatusRebuild -> FilePath -> FilePath -> IO BuildResult
     buildInplace buildStatus srcdir builddir =
         --TODO: [nice to have] use a relative build dir rather than absolute
         buildInplaceUnpackedPackage
@@ -1225,7 +1225,7 @@ hasValidHaddockTargets ElaboratedConfiguredPackage{..}
         hasHaddocks = not (null (elabPkgDescription ^. componentModules name))
 
 
-buildInplaceUnpackedPackage :: Verbosity
+buildInplaceUnpackedPackage :: HasCallStack => Verbosity
                             -> DistDirLayout
                             -> BuildTimeSettings -> Lock -> Lock
                             -> ElaboratedSharedConfig
@@ -1461,7 +1461,7 @@ buildInplaceUnpackedPackage verbosity
                                             distDirLayout srcdir builddir
                                             isParallelBuild cacheLock
 
-    setupInteractive :: Show flags => CommandUI flags
+    setupInteractive :: (Show flags, HasCallStack) => CommandUI flags
                      -> (Version -> flags) -> (Version -> [String]) -> IO ()
     setupInteractive cmd flags args =
       setupWrapper verbosity

@@ -2,6 +2,9 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE RankNTypes #-}
 
+{-# LANGUAGE LambdaCase          #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Distribution.Simple.Command
@@ -20,6 +23,8 @@
 -- derived commands. This feature is used heavily in @cabal-install@.
 
 module Distribution.Simple.Command (
+
+  FlagsTransform(..),
 
   -- * Command interface
   CommandUI(..),
@@ -68,6 +73,12 @@ module Distribution.Simple.Command (
 
   ) where
 
+import qualified Debug.Trace
+
+import GHC.Stack (prettyCallStack, callStack)
+
+import GHC.Show
+
 import Prelude ()
 import Distribution.Compat.Prelude hiding (get)
 
@@ -110,6 +121,7 @@ type Description = String
 data OptionField a = OptionField {
   optionName        :: Name,
   optionDescr       :: [OptDescr a] }
+  deriving (Show)
 
 -- | An OptionField takes one or more OptDescrs, describing the command line
 -- interface for the field.
@@ -123,6 +135,34 @@ data OptDescr a  = ReqArg Description OptFlags ArgPlaceHolder
 
                  | BoolOpt Description OptFlags{-True-} OptFlags{-False-}
                    (Bool -> a -> a) (a-> Maybe Bool)
+
+instance Show (OptDescr a) where
+  showsPrec n = \case
+     ReqArg descr flags placeholder _ _ ->
+       showParen (n >= 11)
+         (showString "ReqArg" . showSpace .
+          showParen True (showsPrec 11 descr) . showSpace .
+          showParen True (showsPrec 11 flags) . showSpace .
+          showParen True (showsPrec 11 placeholder))
+
+     OptArg descr flags placeholder _ _ _ ->
+       showParen (n >= 11)
+         (showString "OptArg" . showSpace .
+          showParen True (showsPrec 11 descr) . showSpace .
+          showParen True (showsPrec 11 flags) . showSpace .
+          showParen True (showsPrec 11 placeholder))
+
+     ChoiceOpt xs ->
+       showParen (n >= 11)
+         (showString "ChoiceOpt" . showSpace .
+          showParen True (showsPrec 1 (map (\(a, b, _, _) -> (a, b)) xs)))
+
+     BoolOpt descr flags flags' _ _ ->
+       showParen (n >= 11)
+         (showString "BoolOpt" . showSpace .
+          showParen True (showsPrec 11 descr) . showSpace .
+          showParen True (showsPrec 11 flags) . showSpace .
+          showParen True (showsPrec 11 flags'))
 
 -- | Short command line option strings
 type SFlags   = [Char]
@@ -219,9 +259,9 @@ choiceOptFromEnum _sf _lf d get =
         firstOne = minBound `asTypeOf` get undefined
 
 commandGetOpts :: ShowOrParseArgs -> CommandUI flags
-                  -> [GetOpt.OptDescr (flags -> flags)]
+                  -> [GetOpt.OptDescr (FlagsTransform flags)]
 commandGetOpts showOrParse command =
-    concatMap viewAsGetOpt (commandOptions command showOrParse)
+    concatMap (fmap (fmap FlagsTransform) . viewAsGetOpt) (commandOptions command showOrParse)
 
 viewAsGetOpt :: OptionField a -> [GetOpt.OptDescr (a -> a)]
 viewAsGetOpt (OptionField _n aa) = concatMap optDescrToGetOpt aa
@@ -372,6 +412,7 @@ mkCommandUI name synopsis usages flags options = CommandUI
 
 -- | Common flags that apply to every command
 data CommonFlag = HelpFlag | ListOptionsFlag
+  deriving (Show)
 
 commonFlags :: ShowOrParseArgs -> [GetOpt.OptDescr CommonFlag]
 commonFlags showOrParseArgs = case showOrParseArgs of
@@ -393,32 +434,41 @@ addCommonFlags showOrParseArgs options =
      map (fmap Left)  (commonFlags showOrParseArgs)
   ++ map (fmap Right) options
 
+newtype FlagsTransform flags = FlagsTransform { unFlagsTransform :: flags -> flags }
+
+instance Show (FlagsTransform flags) where
+  show _ = "FlagsTransform"
+
 -- | Parse a bunch of command line arguments
 --
-commandParseArgs :: CommandUI flags
+commandParseArgs :: forall flags. CommandUI flags
                  -> Bool      -- ^ Is the command a global or subcommand?
                  -> [String]
-                 -> CommandParse (flags -> flags, [String])
+                 -> CommandParse (FlagsTransform flags, [String])
 commandParseArgs command global args =
-  let options = addCommonFlags ParseArgs
+  let
+      options :: [GetOpt.OptDescr (Either CommonFlag (FlagsTransform flags))]
+      options = addCommonFlags ParseArgs
               $ commandGetOpts ParseArgs command
       order | global    = GetOpt.RequireOrder
             | otherwise = GetOpt.Permute
-  in case GetOpt.getOpt' order options args of
+  in
+  Debug.Trace.trace ("order = " ++ show order ++ ", options = " ++ show options ++ ", args =" ++ show args ++ "\ncalled at\n" ++ prettyCallStack callStack) $
+  case GetOpt.getOpt' order options args of
     (flags, _, _,  _)
       | any listFlag flags -> CommandList (commandListOptions command)
       | any helpFlag flags -> CommandHelp (commandHelp command)
       where listFlag (Left ListOptionsFlag) = True; listFlag _ = False
             helpFlag (Left HelpFlag)        = True; helpFlag _ = False
     (flags, opts, opts', [])
-      | global || null opts' -> CommandReadyToGo (accum flags, mix opts opts')
+      | global || null opts' -> CommandReadyToGo (FlagsTransform (accum flags), mix opts opts')
       | otherwise            -> CommandErrors (unrecognised opts')
     (_, _, _, errs)          -> CommandErrors errs
 
   where -- Note: It is crucial to use reverse function composition here or to
         -- reverse the flags here as we want to process the flags left to right
         -- but data flow in function composition is right to left.
-        accum flags = foldr (flip (.)) id [ f | Right f <- flags ]
+        accum flags = foldr (flip (.)) id [ f | Right (FlagsTransform f) <- flags ]
         unrecognised opts = [ "unrecognized "
                               ++ "'" ++ (commandName command) ++ "'"
                               ++ " option `" ++ opt ++ "'\n"
@@ -459,7 +509,7 @@ commandAddAction command action =
           (fmap (uncurry applyDefaultArgs) . commandParseArgs command False)
           NormalCommand
 
-  where applyDefaultArgs mkflags args =
+  where applyDefaultArgs (FlagsTransform mkflags) args =
           let flags = mkflags (commandDefaultFlags command)
            in action flags args
 
@@ -479,7 +529,7 @@ commandsRun globalCommand commands args =
           -> CommandReadyToGo (flags, action cmdArgs)
         _ -> CommandReadyToGo (flags, badCommand name)
       []               -> CommandReadyToGo (flags, noCommand)
-     where flags = mkflags (commandDefaultFlags globalCommand)
+     where flags = unFlagsTransform mkflags (commandDefaultFlags globalCommand)
 
  where
     lookupCommand cname = [ cmd | cmd@(Command cname' _ _ _) <- commands'

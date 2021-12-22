@@ -17,6 +17,10 @@ module Distribution.Client.CmdRepl (
     selectComponentTarget
   ) where
 
+import qualified Debug.Trace
+
+import GHC.Stack (HasCallStack)
+
 import Prelude ()
 import Distribution.Client.Compat.Prelude
 
@@ -140,7 +144,7 @@ envOptions _ =
         ("couldn't parse dependencies: " ++)
         (parsecCommaList parsec)
 
-replCommand :: CommandUI (NixStyleFlags (ReplOptions, EnvFlags))
+replCommand :: HasCallStack => CommandUI (NixStyleFlags (ReplOptions, EnvFlags))
 replCommand = Client.installCommand {
   commandName         = "v2-repl",
   commandSynopsis     = "Open an interactive session for the given component.",
@@ -178,10 +182,13 @@ replCommand = Client.installCommand {
         ++ "to the default component (or no component if there is no project present)\n",
 
   commandDefaultFlags = defaultNixStyleFlags (mempty, defaultEnvFlags),
-  commandOptions = nixStyleOptions $ \showOrParseArgs ->
+  commandOptions = nixStyleOptions replOpts
+  }
+
+replOpts :: HasCallStack => ShowOrParseArgs -> [OptionField (ReplOptions, EnvFlags)]
+replOpts = \showOrParseArgs ->
     map (liftOptionL _1) (replOptions showOrParseArgs) ++
     map (liftOptionL _2) (envOptions showOrParseArgs)
-  }
 
 -- | The @repl@ command is very much like @build@. It brings the install plan
 -- up to date, selects that part of the plan needed by the given or implicit
@@ -194,7 +201,7 @@ replCommand = Client.installCommand {
 -- For more details on how this works, see the module
 -- "Distribution.Client.ProjectOrchestration"
 --
-replAction :: NixStyleFlags (ReplOptions, EnvFlags) -> [String] -> GlobalFlags -> IO ()
+replAction :: HasCallStack => NixStyleFlags (ReplOptions, EnvFlags) -> [String] -> GlobalFlags -> IO ()
 replAction flags@NixStyleFlags { extraFlags = (replFlags, envFlags), ..} targetStrings globalFlags = do
     let
       with                 = withProject    cliConfig                   verbosity targetStrings
@@ -281,6 +288,9 @@ replAction flags@NixStyleFlags { extraFlags = (replFlags, envFlags), ..} targetS
             _                                   -> replFlags'
 
         return (buildCtx, replFlags'')
+
+    Debug.Trace.traceM $ "replFlags'' = " ++ show replFlags''
+    Debug.Trace.traceM $ "replOptionsFlags replFlags = " ++ show (replOptionsFlags replFlags)
 
     let buildCtx' = buildCtx
           { elaboratedShared = (elaboratedShared buildCtx)

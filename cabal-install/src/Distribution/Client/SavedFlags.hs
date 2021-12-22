@@ -53,7 +53,7 @@ readCommandFlags path command = do
     CommandList _ -> throwIO (SavedArgsErrorList savedArgs)
     CommandErrors errs -> throwIO (SavedArgsErrorOther savedArgs errs)
     CommandReadyToGo (mkFlags, _) ->
-      return (mkFlags (commandDefaultFlags command))
+      return (unFlagsTransform mkFlags (commandDefaultFlags command))
 
 -- -----------------------------------------------------------------------------
 -- * Exceptions

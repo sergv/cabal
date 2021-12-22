@@ -78,6 +78,10 @@ module Distribution.Simple.Setup (
   boolOpt, boolOpt', trueArg, falseArg,
   optionVerbosity, optionNumJobs) where
 
+import GHC.Stack (HasCallStack, prettyCallStack, callStack)
+
+import qualified Debug.Trace
+
 import Prelude ()
 import Distribution.Compat.Prelude hiding (get)
 
@@ -1800,7 +1804,7 @@ replCommand progDb = CommandUI
   where
     liftReplOption = liftOption replReplOptions (\v flags -> flags { replReplOptions = v })
 
-replOptions :: ShowOrParseArgs -> [OptionField ReplOptions]
+replOptions :: HasCallStack => ShowOrParseArgs -> [OptionField ReplOptions]
 replOptions _ =
   [ option [] ["repl-no-load"]
     "Disable loading of project modules at REPL startup."
@@ -1808,7 +1812,9 @@ replOptions _ =
     trueArg
   , option [] ["repl-options"]
     "use this option for the repl"
-    replOptionsFlags (\p flags -> flags { replOptionsFlags = p })
+    replOptionsFlags (\p flags ->
+      Debug.Trace.trace ("replOptions: p = " ++ show p ++ "\ncalled at\n" ++ prettyCallStack callStack) $
+      flags { replOptionsFlags = p })
     (reqArg "FLAG" (succeedReadE (:[])) id)
   ]
 

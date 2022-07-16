@@ -314,8 +314,8 @@ main args = do
   mainWorker =<< (++ args1) <$> expandResponse args0
 
 -- | Check whether assertions are enabled and print a warning in that case.
-warnIfAssertionsAreEnabled :: IO ()
-warnIfAssertionsAreEnabled =
+_warnIfAssertionsAreEnabled :: IO ()
+_warnIfAssertionsAreEnabled =
   assert False (return ())
     `catch` (\(_e :: AssertionFailed) -> hPutStrLn stderr assertionsEnabledMsg)
   where
@@ -357,11 +357,9 @@ mainWorker args = do
                   False -> printErrors errs
                   True -> do
                     -- In main operation (not help, version etc.) print warning if assertions are on.
-                    warnIfAssertionsAreEnabled
                     CmdRun.handleShebang script scriptArgs
           CommandReadyToGo action -> do
             -- In main operation (not help, version etc.) print warning if assertions are on.
-            warnIfAssertionsAreEnabled
             action globalFlags
   where
     delegateToExternal

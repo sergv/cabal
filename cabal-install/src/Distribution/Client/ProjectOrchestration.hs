@@ -102,6 +102,8 @@ module Distribution.Client.ProjectOrchestration
   , establishDummyDistDirLayout
   ) where
 
+import Distribution.Compat.Stack
+
 import Distribution.Client.Compat.Prelude
 import System.Directory
   ( makeAbsolute
@@ -477,11 +479,13 @@ runProjectBuildPhase
 --
 -- Update bits of state based on the build outcomes and report any failures.
 runProjectPostBuildPhase
-  :: Verbosity
+  :: WithCallStack
+  (  Verbosity
   -> ProjectBaseContext
   -> ProjectBuildContext
   -> BuildOutcomes
   -> IO ()
+  )
 runProjectPostBuildPhase _ ProjectBaseContext{buildSettings} _ _
   | buildSettingDryRun buildSettings =
       return ()
@@ -1310,11 +1314,13 @@ writeBuildReports settings buildContext plan buildOutcomes = do
 
 -- | If there are build failures then report them and throw an exception.
 dieOnBuildFailures
-  :: Verbosity
+  :: WithCallStack
+  (  Verbosity
   -> CurrentCommand
   -> ElaboratedInstallPlan
   -> BuildOutcomes
   -> IO ()
+  )
 dieOnBuildFailures verbosity currentCommand plan buildOutcomes
   | null failures = return ()
   | isSimpleCase = exitFailure

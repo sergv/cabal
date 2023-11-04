@@ -128,6 +128,8 @@ module Distribution.Simple.Program
   , hpcProgram
   ) where
 
+import Distribution.Compat.Stack
+
 import Distribution.Compat.Prelude
 import Prelude ()
 
@@ -181,7 +183,8 @@ getProgramOutput verbosity prog args =
 
 -- | Looks up the given program in the program database and runs it.
 runDbProgram
-  :: Verbosity
+  :: WithCallStack
+  (  Verbosity
   -- ^ verbosity
   -> Program
   -- ^ The program to run
@@ -190,12 +193,14 @@ runDbProgram
   -> [ProgArg]
   -- ^ Any /extra/ arguments to add
   -> IO ()
+  )
 runDbProgram verbosity prog progDb args =
   runDbProgramCwd verbosity Nothing prog progDb args
 
 -- | Looks up the given program in the program database and runs it.
 runDbProgramCwd
-  :: Verbosity
+  :: WithCallStack
+  (  Verbosity
   -- ^ verbosity
   -> Maybe (SymbolicPath CWD (Dir to))
   -- ^ working directory
@@ -206,6 +211,7 @@ runDbProgramCwd
   -> [ProgArg]
   -- ^ Any /extra/ arguments to add
   -> IO ()
+  )
 runDbProgramCwd verbosity mbWorkDir prog programDb args =
   case lookupProgram prog programDb of
     Nothing ->

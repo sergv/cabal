@@ -22,8 +22,12 @@ import System.IO.Error
 #endif
 
 #ifdef GHC_STACK_SUPPORTED
-import GHC.Stack
+import GHC.Stack hiding (withFrozenCallStack)
 #endif
+
+withFrozenCallStack :: WithCallStack (a -> a)
+withFrozenCallStack x = x
+
 
 #ifdef GHC_STACK_SUPPORTED
 
@@ -57,14 +61,14 @@ prettyCallStack = showCallStack
 --
 parentSrcLocPrefix :: WithCallStack String
 #if MIN_VERSION_base(4,9,0)
-parentSrcLocPrefix =
-  case getCallStack callStack of
-    (_:(_, loc):_) -> showLoc loc
-    [(_, loc)] -> showLoc loc
-    [] -> error "parentSrcLocPrefix: empty call stack"
- where
-  showLoc loc =
-    srcLocFile loc ++ ":" ++ show (srcLocStartLine loc) ++ ": "
+parentSrcLocPrefix = prettyCallStack callStack
+  -- case getCallStack callStack of
+  --   (_:(_, loc):_) -> showLoc loc
+  --   [(_, loc)] -> showLoc loc
+  --   [] -> error "parentSrcLocPrefix: empty call stack"
+ -- where
+ --  showLoc loc =
+ --    srcLocFile loc ++ ":" ++ show (srcLocStartLine loc) ++ ": "
 #else
 parentSrcLocPrefix = "Call sites not available with base < 4.9.0.0 (GHC 8.0): "
 #endif

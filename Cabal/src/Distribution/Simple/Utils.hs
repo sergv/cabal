@@ -426,7 +426,7 @@ dieWithLocation' verbosity filename mb_lineno msg =
       ++ ": "
       ++ msg
 
-die' :: Verbosity -> String -> IO a
+die' :: WithCallStack (Verbosity -> String -> IO a)
 die' verbosity msg = withFrozenCallStack $ do
   ioError . verbatimUserError
     =<< annotateErrorString verbosity
@@ -488,7 +488,7 @@ prefixWithProgName msg = do
   return $ pname ++ ": " ++ msg
 
 -- | Annotate an error string with timestamp and 'withMetadata'.
-annotateErrorString :: Verbosity -> String -> IO String
+annotateErrorString :: WithCallStack (Verbosity -> String -> IO String)
 annotateErrorString verbosity msg = do
   ts <- getPOSIXTime
   return $ withMetadata ts AlwaysMark VerboseTrace verbosity msg

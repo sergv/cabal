@@ -826,7 +826,7 @@ platformDefines lbi =
       Wasm32 -> ["wasm32"]
       OtherArch _ -> []
 
-ppHappy :: BuildInfo -> LocalBuildInfo -> ComponentLocalBuildInfo -> PreProcessor
+ppHappy :: WithCallStack (BuildInfo -> LocalBuildInfo -> ComponentLocalBuildInfo -> PreProcessor)
 ppHappy _ lbi _ = pp{platformIndependent = True}
   where
     pp = standardPP lbi happyProgram (hcFlags hc)
@@ -835,7 +835,7 @@ ppHappy _ lbi _ = pp{platformIndependent = True}
     hcFlags GHCJS = ["-agc"]
     hcFlags _ = []
 
-ppAlex :: BuildInfo -> LocalBuildInfo -> ComponentLocalBuildInfo -> PreProcessor
+ppAlex :: WithCallStack (BuildInfo -> LocalBuildInfo -> ComponentLocalBuildInfo -> PreProcessor)
 ppAlex _ lbi _ = pp{platformIndependent = True}
   where
     pp = standardPP lbi alexProgram (hcFlags hc)
@@ -844,7 +844,7 @@ ppAlex _ lbi _ = pp{platformIndependent = True}
     hcFlags GHCJS = ["-g"]
     hcFlags _ = []
 
-standardPP :: LocalBuildInfo -> Program -> [String] -> PreProcessor
+standardPP :: WithCallStack (LocalBuildInfo -> Program -> [String] -> PreProcessor)
 standardPP lbi prog args =
   PreProcessor
     { platformIndependent = False

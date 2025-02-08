@@ -179,7 +179,7 @@ runConfigureScript verbHandles cfg flags programDb hp = do
           : [("CXXFLAGS", Just (mkFlagsEnv cxxFlags "CXXFLAGS")) | Just cxxFlags <- [mcxxFlags]]
           ++ [("PATH", Just pathEnv) | not (null extraPath)]
           ++ cabalFlagEnv
-      maybeHostFlag = ["--host=" ++ show (pretty hp) | hp /= buildPlatform]
+      maybeHostFlag = concat [ ["--build=" ++ show (pretty buildPlatform), "--host=" ++ show (pretty hp)] | hp /= buildPlatform ]
       args' =
         configureFile'
           : args

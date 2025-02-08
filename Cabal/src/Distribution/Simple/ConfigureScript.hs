@@ -183,7 +183,7 @@ runConfigureScript cfg flags programDb hp = do
           : [("CXXFLAGS", Just (mkFlagsEnv cxxFlags "CXXFLAGS")) | Just cxxFlags <- [mcxxFlags]]
           ++ [("PATH", Just pathEnv) | not (null extraPath)]
           ++ cabalFlagEnv
-      maybeHostFlag = if hp == buildPlatform then [] else ["--host=" ++ show (pretty hp)]
+      maybeHostFlag = if hp == buildPlatform then [] else ["--build=" ++ show (pretty buildPlatform), "--host=" ++ show (pretty hp)]
       args' =
         configureFile'
           : args

@@ -9,6 +9,7 @@ module Test.Utils.TempTestDir
 import Distribution.Compat.Internal.TempFile (createTempDirectory)
 import Distribution.Simple.Utils (warn, TempFileOptions (..), defaultTempFileOptions)
 import Distribution.Verbosity
+import GHC.Stack.Types (HasCallStack)
 
 import Control.Concurrent (threadDelay)
 import Control.Exception (throwIO, try)
@@ -26,7 +27,7 @@ import qualified System.Info (os)
 withTestDir :: (MonadIO m, MonadMask m) => Verbosity -> String -> (FilePath -> m a) -> m a
 withTestDir verbosity template action = withTestDir' verbosity defaultTempFileOptions template action
 
-withTestDir' :: (MonadIO m, MonadMask m) => Verbosity -> TempFileOptions -> String -> (FilePath -> m a) -> m a
+withTestDir' :: (MonadIO m, MonadMask m, HasCallStack) => Verbosity -> TempFileOptions -> String -> (FilePath -> m a) -> m a
 withTestDir' verbosity tempFileOpts template action = do
   systmpdir <-
     -- MacOS returns /var/folders/... which is a symlink (/var -> /private/var),

@@ -284,10 +284,10 @@ setupTest m = runTestM "" $ do
     skipIf "setup test" (testSkipSetupTests env)
     m
 
-cabalTest :: TestM () -> IO ()
+cabalTest :: HasCallStack => TestM () -> IO ()
 cabalTest = cabalTest' ""
 
-cabalTest' :: String -> TestM () -> IO ()
+cabalTest' :: HasCallStack => String -> TestM () -> IO ()
 cabalTest' mode m = runTestM mode $ do
     skipUnless "no cabal-install" =<< isAvailableProgram cabalProgram
     withReaderT (\nenv -> nenv { testCabalInstallAsSetup = True }) m
@@ -314,7 +314,7 @@ python3Program :: Program
 python3Program = simpleProgram "python3"
 
 -- | Run a test in the test monad according to program's arguments.
-runTestM :: String -> TestM () -> IO ()
+runTestM :: HasCallStack => String -> TestM () -> IO ()
 runTestM mode m =
     execParser (info testArgParser Data.Monoid.mempty) >>= \args ->
     withTestDir' verbosity (defaultTempFileOptions { optKeepTempFiles = argKeepTmpFiles (testCommonArgs args) })

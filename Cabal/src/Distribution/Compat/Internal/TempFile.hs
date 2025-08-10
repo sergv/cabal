@@ -14,7 +14,7 @@ import System.FilePath ((</>))
 
 import System.IO (Handle, openBinaryTempFile, openBinaryTempFileWithDefaultPermissions, openTempFile)
 import System.IO.Error (isAlreadyExistsError)
-import System.Posix.Internals (c_getpid)
+-- import System.Posix.Internals (c_getpid)
 
 #if defined(mingw32_HOST_OS) || defined(ghcjs_HOST_OS)
 import System.Directory       ( createDirectory )
@@ -27,9 +27,10 @@ openNewBinaryFile = openBinaryTempFileWithDefaultPermissions
 
 createTempDirectory :: FilePath -> String -> IO FilePath
 createTempDirectory dir template = do
-  pid <- c_getpid
-  findTempName pid
+  -- pid <- c_getpid
+  findTempName 0
   where
+    findTempName :: Int -> IO FilePath
     findTempName x = do
       let relpath = template ++ "-" ++ show x
           dirpath = dir </> relpath

@@ -321,16 +321,16 @@ main args = do
 
 -- | Check whether assertions are enabled and print a warning in that case.
 warnIfAssertionsAreEnabled :: IO ()
-warnIfAssertionsAreEnabled =
-  assert False (return ())
-    `catch` (\(_e :: AssertionFailed) -> hPutStrLn stderr assertionsEnabledMsg)
-  where
-    -- Andreas, 2022-12-30, issue #8654:
-    -- The verbosity machinery is not in place at this point (option -v not parsed),
-    -- so instead of using function @warn@, we print straight to stderr.
-
-    assertionsEnabledMsg =
-      "Warning: this is a debug build of cabal-install with assertions enabled."
+warnIfAssertionsAreEnabled = pure ()
+  -- assert False (return ())
+  --   `catch` (\(_e :: AssertionFailed) -> hPutStrLn stderr assertionsEnabledMsg)
+  -- where
+  --   -- Andreas, 2022-12-30, issue #8654:
+  --   -- The verbosity machinery is not in place at this point (option -v not parsed),
+  --   -- so instead of using function @warn@, we print straight to stderr.
+  --
+  --   assertionsEnabledMsg =
+  --     "Warning: this is a debug build of cabal-install with assertions enabled."
 
 -- | Core worker, similar to 'defaultMainHelper' in Cabal/Distribution.Simple
 --

@@ -15,7 +15,7 @@ import System.FilePath ((</>))
 import System.IO (Handle, openBinaryTempFile, openBinaryTempFileWithDefaultPermissions, openTempFile)
 import System.IO.Error (isAlreadyExistsError)
 import System.IO.Unsafe (unsafePerformIO)
-import System.Posix.Internals (c_getpid)
+-- import System.Posix.Internals (c_getpid)
 
 #if defined(mingw32_HOST_OS) || defined(ghcjs_HOST_OS)
 import System.Directory       ( createDirectory )
@@ -28,10 +28,9 @@ openNewBinaryFile = openBinaryTempFileWithDefaultPermissions
 
 createTempDirectory :: FilePath -> String -> IO FilePath
 createTempDirectory dir template = do
-  pid <- c_getpid
   let findTempName = do
         (counter, _) <- atomicModifyIORef'_ tempDirectoryCounter (+ 1)
-        let relpath = template ++ "-" ++ show pid ++ show counter
+        let relpath = template ++ "-" ++ show counter
             dirpath = dir </> relpath
         r <- tryIO $ mkPrivateDir dirpath
         case r of

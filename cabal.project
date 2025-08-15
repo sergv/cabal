@@ -9,6 +9,7 @@ tests: True
 -- to disable this
 package cabal-install
   flags: +git-rev
+  executable-dynamic: False
 
 package Cabal
   flags: +git-rev

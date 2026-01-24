@@ -761,7 +761,7 @@ runReplOrWriteFlags ghcProg lbi rflags ghcOpts pkg_name target =
             comp
             platform
             mbWorkDir
-            ghcOpts
+            (ghcOpts { ghcOptOptimisation = NoFlag })
         Flag out_dir -> do
           let uid = componentUnitId clbi
               this_unit = prettyShow uid
@@ -803,7 +803,7 @@ runReplOrWriteFlags ghcProg lbi rflags ghcOpts pkg_name target =
             BS.pack $
               escapeArgs $
                 extra_opts
-                  ++ renderGhcOptions comp platform (ghcOpts{ghcOptMode = NoFlag})
+                  ++ renderGhcOptions' True comp platform (ghcOpts { ghcOptMode = NoFlag, ghcOptOptimisation = NoFlag })
                   ++ programOverrideArgs ghcProg
 
 replNoLoad :: Ord a => ReplOptions -> NubListR a -> NubListR a

@@ -14,6 +14,7 @@ module Distribution.Simple.Program.GHC
   , GhcProfAuto (..)
   , ghcInvocation
   , renderGhcOptions
+  , renderGhcOptions'
   , runGHC
   , runGHCWithResponseFile
   , runReplProgram
@@ -708,7 +709,7 @@ runReplProgram withReplProg tempFileOptions verbosity ghcProg comp platform mbWo
   let replProg = case withReplProg of
         Just path -> ghcProg{programLocation = FoundOnSystem path}
         Nothing -> ghcProg
-   in runGHCWithResponseFile "ghci.rsp" Nothing tempFileOptions verbosity replProg comp platform mbWorkDir ghcOpts
+   in runGHCWithResponseFile "ghci.rsp" Nothing tempFileOptions verbosity replProg comp platform mbWorkDir (ghcOpts { ghcOptOptimisation = NoFlag })
 
 ghcInvocation
   :: Verbosity
@@ -737,7 +738,10 @@ ghcInvocation verbosity ghcProg comp platform mbWorkDir opts = do
 -- working directory, as this improves error messages.
 
 renderGhcOptions :: Compiler -> Platform -> GhcOptions -> [String]
-renderGhcOptions comp _platform@(Platform _arch os) opts
+renderGhcOptions = renderGhcOptions' False
+
+renderGhcOptions' :: Bool -> Compiler -> Platform -> GhcOptions -> [String]
+renderGhcOptions' isRepl comp _platform@(Platform _arch os) opts
   | compilerFlavor comp `notElem` [GHC, GHCJS] =
       error $
         "Distribution.Simple.Program.GHC.renderGhcOptions: "
@@ -767,7 +771,7 @@ renderGhcOptions comp _platform@(Platform _arch os) opts
 
           case flagToMaybe (ghcOptOptimisation opts) of
             Nothing -> []
-            Just GhcNoOptimisation -> ["-O0"]
+            Just GhcNoOptimisation -> if isRepl then [] else ["-O0"]
             Just GhcNormalOptimisation -> ["-O"]
             Just GhcMaximumOptimisation -> ["-O2"]
             Just (GhcSpecialOptimisation s) -> ["-O" ++ s] -- eg -Odph

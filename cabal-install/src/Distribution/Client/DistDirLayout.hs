@@ -54,6 +54,8 @@ import Distribution.System
 import Distribution.Types.ComponentName
 import Distribution.Types.LibraryName
 
+import qualified System.Info
+
 -- | Information which can be used to construct the path to
 -- the build directory of a build.  This is LESS fine-grained
 -- than what goes into the hashed 'InstalledPackageId',
@@ -210,7 +212,9 @@ defaultDistDirLayout projectRoot mdistDirectory haddockOutputDir =
     distDirectory :: FilePath
     distDirectory =
       distProjectRootDirectory
-        </> fromMaybe "dist-newstyle" mdistDirectory
+        </> fromMaybe defaultBuildDir mdistDirectory
+
+    defaultBuildDir = if System.Info.os == "mingw32" then "dist-newstyle" else "/tmp/dist"
     -- TODO: switch to just dist at some point, or some other new name
 
     distBuildRootDirectory :: FilePath
